@@ -2,3 +2,6 @@ output/
 character/variant-*.png
 .env
 jobs.json
+*.mp4
+*.mov
+*.webm
