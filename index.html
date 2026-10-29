@@ -5,85 +5,163 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LOOKLIE Генератор</title>
 <link rel="icon" href="character/looklie-boy.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f8fc; --card:#fff; --ink:#1c2433; --muted:#6b778c; --line:#e2e8f2;
-  --accent:#ffc800; --accent-ink:#3a2d00; --ok:#1f9d55; --bad:#d64545; --blue:#3b82f6;
+  --bg:#fff9e8; --bg2:#e6f4ff; --card:#ffffff; --ink:#1d2340; --muted:#6a7094; --line:#1d2340;
+  --yellow:#ffd400; --blue:#4cb8ff; --mint:#3fe0b0; --pink:#ff7ab8; --violet:#8b6cff; --orange:#ff9a3c;
+  --ok:#17b978; --bad:#ff5470; --code:#16183a; --code-ink:#c9ceff;
+  --shadow:0 4px 0 var(--line);
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#10151f;--card:#18202e;--ink:#eef2f9;--muted:#93a0b8;--line:#27324a;--accent-ink:#2a2000}
+  :root:not([data-theme="light"]){--bg:#14163a;--bg2:#0d2a4a;--card:#1f2350;--ink:#f3f4ff;--muted:#a3a8d6;--line:#0a0b22;--code:#0a0b22}
 }
-:root[data-theme="dark"]{--bg:#10151f;--card:#18202e;--ink:#eef2f9;--muted:#93a0b8;--line:#27324a;--accent-ink:#2a2000}
+:root[data-theme="dark"]{--bg:#14163a;--bg2:#0d2a4a;--card:#1f2350;--ink:#f3f4ff;--muted:#a3a8d6;--line:#0a0b22;--code:#0a0b22}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{display:flex;align-items:center;gap:14px;padding:16px;max-width:980px;margin:0 auto}
-header img{width:56px;height:56px;border-radius:14px;object-fit:cover;object-position:top;background:#bfe3ff}
-header h1{font-size:20px;margin:0}
-header p{margin:0;color:var(--muted);font-size:14px}
-main{max-width:980px;margin:0 auto;padding:0 16px 80px}
-.bar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
-.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;font-size:14px}
-.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-.tab span{opacity:.7;margin-left:4px}
+html{background:var(--bg)}
+body{
+  margin:0;color:var(--ink);font:600 16px/1.5 Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 8% 4%, rgba(255,212,0,.35) 0 160px, transparent 161px),
+    radial-gradient(circle at 96% 12%, rgba(76,184,255,.35) 0 220px, transparent 221px),
+    radial-gradient(circle at 80% 90%, rgba(255,122,184,.25) 0 200px, transparent 201px),
+    radial-gradient(circle at 4% 80%, rgba(63,224,176,.25) 0 170px, transparent 171px),
+    linear-gradient(160deg,var(--bg),var(--bg2));
+  background-attachment:fixed;
+  min-height:100vh;
+}
+h1,h2,h3{font-family:Fredoka,Nunito,system-ui,sans-serif;margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+
+/* ---------- hero ---------- */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;margin:20px 0 18px;
+  background:var(--card);border:3px solid var(--line);border-radius:28px;box-shadow:0 6px 0 var(--line);padding:18px 22px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;
+  background:conic-gradient(from 200deg,var(--yellow),var(--pink),var(--violet),var(--blue),var(--mint),var(--yellow));opacity:.45}
+.avatar{width:96px;height:96px;border-radius:26px;border:3px solid var(--line);background:linear-gradient(160deg,#bfe6ff,#fff3b0);overflow:hidden;box-shadow:var(--shadow)}
+.avatar img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.hero h1{font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.5px;position:relative;z-index:1}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink) 55%,var(--orange));-webkit-background-clip:text;background-clip:text;color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;position:relative;z-index:1}
+.chip{font:500 12px/1 "JetBrains Mono",ui-monospace,Consolas,monospace;padding:7px 10px;border-radius:999px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.chip.ai{background:linear-gradient(90deg,var(--violet),var(--blue));color:#fff;font-weight:500}
+
+/* ---------- how it works ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.step{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:3px solid var(--line);border-radius:20px;padding:12px 14px;box-shadow:var(--shadow);font-size:14px}
+.step b{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:12px;border:3px solid var(--line);font:700 17px Fredoka,sans-serif;color:#1d2340}
+.step:nth-child(1) b{background:var(--yellow)} .step:nth-child(2) b{background:var(--mint)} .step:nth-child(3) b{background:var(--pink)}
+.step span{color:var(--muted)} .step strong{color:var(--ink);display:block;font:600 16px Fredoka,sans-serif}
+
+/* ---------- toolbar ---------- */
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 18px}
+.tab{font:600 15px Fredoka,sans-serif;border:3px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow)}
+.tab[aria-selected="true"]{background:var(--yellow);color:#1d2340}
+.tab span{display:inline-grid;place-items:center;min-width:24px;height:24px;margin-left:8px;padding:0 6px;border-radius:999px;background:var(--line);color:#fff;font-size:13px}
 .spacer{flex:1}
 button{font:inherit}
-.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:14px}
-.btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
-.btn.bad{color:var(--bad)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
-.card h3{margin:0;font-size:17px}
-.loc{color:var(--muted);font-size:13px}
-.shots{display:flex;flex-direction:column;gap:6px}
-.shot{display:grid;grid-template-columns:44px 1fr;gap:6px;align-items:start;font-size:13px}
-.shot b{color:var(--muted);font-weight:500;padding-top:6px}
-.shot .f{display:flex;flex-direction:column;gap:4px}
-input[type=text],textarea{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
-textarea{resize:vertical;min-height:70px;font-family:ui-monospace,Consolas,monospace}
-details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.btn{font:600 15px Fredoka,sans-serif;border:3px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:14px;cursor:pointer;box-shadow:var(--shadow)}
+.btn.primary{background:linear-gradient(90deg,var(--violet),var(--blue));color:#fff}
+.btn.magic{background:linear-gradient(90deg,var(--pink),var(--orange));color:#fff}
+.btn.ok{background:var(--mint);color:#06382a}
+.btn.bad{background:var(--card);color:var(--bad)}
+.btn.small{padding:7px 12px;font-size:14px}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+:focus-visible{outline:4px solid var(--violet);outline-offset:2px}
+
+/* ---------- cards ---------- */
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));padding-bottom:90px}
+.card{--c:var(--yellow);background:var(--card);border:3px solid var(--line);border-radius:26px;box-shadow:0 6px 0 var(--line);display:flex;flex-direction:column;overflow:hidden}
+.card:nth-child(5n+1){--c:var(--yellow)} .card:nth-child(5n+2){--c:var(--blue)} .card:nth-child(5n+3){--c:var(--mint)}
+.card:nth-child(5n+4){--c:var(--pink)} .card:nth-child(5n+5){--c:var(--violet)}
+.card-top{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--c);border-bottom:3px solid var(--line);color:#1d2340}
+.emoji{display:grid;place-items:center;flex:none;width:50px;height:50px;border-radius:16px;background:#fff;border:3px solid var(--line);font-size:28px}
+.card-top h3{font-size:19px;line-height:1.15;font-weight:600}
+.card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.loc{color:var(--muted);font-size:13px;font-weight:600}
+.shots{display:flex;flex-direction:column;gap:8px}
+.shot{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:start}
+.shot b{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--c);border:3px solid var(--line);font:700 14px Fredoka,sans-serif;color:#1d2340}
+.shot .t{font-size:14px;padding-top:4px}
+.shot .t i{font-style:normal;font-weight:800;color:var(--violet)}
+.f{display:flex;flex-direction:column;gap:5px}
+input[type=text],textarea{width:100%;font:600 14px Nunito,sans-serif;padding:8px 10px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+input[type=text].say{font-weight:800;color:var(--violet)}
+details summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:800;list-style:none}
+details summary::before{content:"</> ";font-family:"JetBrains Mono",monospace;color:var(--violet)}
+textarea{resize:vertical;min-height:130px;margin-top:8px;font:400 12px/1.5 "JetBrains Mono",ui-monospace,Consolas,monospace;background:var(--code);color:var(--code-ink);border-color:var(--line)}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
-.empty{color:var(--muted);padding:40px 0;text-align:center}
-.help{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--muted);margin-bottom:16px}
-.help b{color:var(--ink)}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
-#toast.on{opacity:1}
-@media(max-width:480px){.spacer{display:none}}
+.file{font:500 12px "JetBrains Mono",monospace;color:var(--muted);word-break:break-all}
+.status{align-self:flex-start;font:600 13px Fredoka,sans-serif;padding:4px 10px;border-radius:999px;border:2px solid var(--line);background:var(--mint);color:#06382a}
+
+.empty{background:var(--card);border:3px dashed var(--line);border-radius:24px;text-align:center;padding:40px 20px;color:var(--muted);font-size:17px;margin-bottom:90px}
+.empty big{display:block;font-size:46px;margin-bottom:6px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:16px;border:3px solid var(--line);font:600 15px Fredoka,sans-serif;display:none;max-width:90vw;text-align:center;z-index:5}
+#toast.on{display:block}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:0 0 28px}
+
+@media(max-width:720px){
+  .steps{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr;text-align:left}
+  .hero h1{font-size:28px}
+  .spacer{display:none}
+  .bar .btn{flex:1 1 auto}
+}
 </style>
 </head>
 <body>
-<header>
-  <img src="character/looklie-boy.png" alt="Персонаж LOOKLIE">
-  <div>
-    <h1>LOOKLIE Генератор</h1>
-    <p>Grok Imagine 1.5 Lite · 9:16 · 720p · 10 сек · English</p>
-  </div>
-</header>
-<main>
-  <div class="help">
-    <b>Как это работает:</b> здесь вы выбираете и правите сценарии. Нажмите «Одобрить», затем «Скопировать команду» и вставьте её Claude в чат — он по очереди сгенерирует видео и положит их в папку «YouTuBe UP!» на рабочем столе. Новые идеи: кнопка «Сгенерировать идеи» — скопируйте запрос и вставьте его Claude, он добавит 10 идей.
-  </div>
+<div class="wrap">
+  <header class="hero">
+    <div class="avatar"><img src="character/looklie-boy.png" alt="Персонаж LOOKLIE"></div>
+    <div>
+      <h1>LOOKLIE <em>Генератор</em> видео</h1>
+      <div class="chips">
+        <span class="chip ai">✦ AI</span>
+        <span class="chip">Grok Imagine 1.5 Lite</span>
+        <span class="chip">9:16</span>
+        <span class="chip">720p</span>
+        <span class="chip">10 сек</span>
+        <span class="chip">English</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="steps" aria-label="Как это работает">
+    <div class="step"><b>1</b><div><strong>Идеи</strong><span>Жмите «Сгенерировать идеи» — сайт сам придумает 10 сценариев</span></div></div>
+    <div class="step"><b>2</b><div><strong>Одобрение</strong><span>Поправьте слова, нажмите «Одобрить»</span></div></div>
+    <div class="step"><b>3</b><div><strong>Видео</strong><span>«Скопировать команду» → ролики делаются по очереди</span></div></div>
+  </section>
+
   <div class="bar" role="tablist" id="tabs"></div>
   <div class="grid" id="list"></div>
-  <p class="empty" id="empty" hidden></p>
-</main>
-<div id="toast"></div>
+  <div class="empty" id="empty" hidden></div>
+  <footer>Видео сохраняются в папку «YouTuBe UP!» на рабочем столе</footer>
+</div>
+<div id="toast" role="status"></div>
 
+<script src="generator.js"></script>
 <script>
 const CHAR_START = 'Same super cute toddler boy with big round clear light glasses, huge bright blue sparkling eyes, soft rosy cheeks, tiny freckles, light golden-blond hair in a modern memorable hairstyle (fluffy textured top with a playful upward swoosh quiff, short neat sides), warm biggest smile, tiny body, wearing a cozy sunny-yellow hoodie with the text "LOOKLIE" clearly visible on the chest, light blue rolled-up jeans, small white sneakers';
 const CHAR_END = '. Only him. Strictly same look. Very sticky adorable face that kids can\'t stop watching.';
 const TABS = [
-  ['proposed','Новые'], ['approved','Одобренные'], ['done','Готовые'], ['rejected','Отклонённые']
+  ['proposed','✨ Новые'], ['approved','👍 Одобренные'], ['done','🎬 Готовые'], ['rejected','🗑️ Отклонённые']
 ];
+const EMOJI = { 'skate-learn':'🛹', buildings:'🏙️', 'farm-animals':'🐮', colors:'🎈', fruits:'🍎', vehicles:'🚂', weather:'☀️' };
+const FALLBACK_EMOJI = ['🌟','🚀','🧩','🌈','🦄','🎨','🍄','🔢','🐻','🌳'];
 
 let base = [];
+let fileScenarios = [];
+let custom = load('lk_custom', []);
 let state = load('lk_state', {});      // id -> {status, shots}
 let tab = load('lk_tab', 'proposed');
 
 function load(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }
 function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+function emojiFor(s, i){ return s.emoji || EMOJI[s.id] || FALLBACK_EMOJI[Math.abs(hash(s.id)) % FALLBACK_EMOJI.length]; }
+function hash(t){ let h = 0; for (const c of t) h = (h * 31 + c.charCodeAt(0)) | 0; return h; }
 
 function view(s){
   const o = state[s.id] || {};
@@ -92,11 +170,13 @@ function view(s){
 }
 function buildPrompt(s){
   const extra = s.extra ? ', ' + s.extra : '';
+  const end = s.others ? CHAR_END.replace(' Only him.', '') : CHAR_END;
+  const loc = s.others ? s.location + ' Also in the scene: ' + s.others + '.' : s.location;
   const lines = s.shots.map((x,i) => `${i*2}-${i*2+2}s: ${x.action}, says "${x.say}"`).join('\n');
   return [
     'Cute 3D Pixar-style toddler video, 10 seconds, bright colors, nursery style.',
-    CHAR_START + extra + CHAR_END,
-    s.location,
+    CHAR_START + extra + end,
+    loc,
     s.intro,
     lines,
     `${s.rule} Slow cute clear movements. Soft child voice. Gentle kids music. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.`
@@ -112,7 +192,8 @@ function setShot(id, i, key, val){
   const ta = document.querySelector(`[data-prompt="${id}"]`);
   if (ta) ta.value = buildPrompt({ ...s, shots });
 }
-function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 2200); }
+let toastTimer;
+function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), 2400); }
 async function copy(text, msg){
   try { await navigator.clipboard.writeText(text); toast(msg); }
   catch { prompt('Скопируйте вручную:', text); }
@@ -125,7 +206,15 @@ function approvedCommand(){
   return 'Сгенерируй видео по одобренным сценариям (Grok Imagine 1.5 Lite, 9:16, 720p, 10 сек, без референса), по очереди, готовые файлы клади в папку «YouTuBe UP!» на рабочем столе: '
     + items.map(s => s.id).join(', ') + '\n\n```json\n' + JSON.stringify(payload, null, 2) + '\n```';
 }
-const NEW_REQUEST = 'Сгенерируй 10 новых простых идей для детских видео с нашим мальчиком LOOKLIE (например: «Мальчик собирает грибы», «Мальчик едет на поезде», «Мальчик учит цифры», «Мальчик знакомится с девочкой»). Не повторяй идеи из scenarios.json. Для каждой сделай сценарий по нашему шаблону (5 кадров по 2 секунды), добавь в scenarios.json со статусом proposed и обнови сайт на GitHub.';
+
+function addIdeas(){
+  const fresh = generateIdeas(10, base.map(b => b.id));
+  if (!fresh.length){ toast('Банк идей закончился — все темы уже на сайте'); return; }
+  custom = custom.concat(fresh); save('lk_custom', custom);
+  base = fileScenarios.concat(custom);
+  tab = 'proposed'; save('lk_tab', tab); render();
+  toast('Добавлено идей: ' + fresh.length);
+}
 
 function render(){
   const all = base.map(view);
@@ -133,28 +222,31 @@ function render(){
   tabsEl.innerHTML = TABS.map(([k,l]) =>
     `<button class="tab" role="tab" aria-selected="${tab===k}" data-tab="${k}">${l}<span>${all.filter(s=>s.status===k).length}</span></button>`
   ).join('') + '<span class="spacer"></span>'
-    + '<button class="btn" id="askNew">Сгенерировать идеи</button>'
-    + '<button class="btn primary" id="copyCmd">Скопировать команду</button>';
+    + '<button class="btn magic" id="askNew">✨ Сгенерировать идеи</button>'
+    + '<button class="btn primary" id="copyCmd">🚀 Скопировать команду</button>';
   document.getElementById('copyCmd').disabled = !all.some(s => s.status === 'approved');
   const items = all.filter(s => s.status === tab);
   const list = document.getElementById('list');
   const empty = document.getElementById('empty');
   empty.hidden = items.length > 0;
-  empty.textContent = tab === 'proposed' ? 'Новых сценариев нет — нажмите «Сгенерировать идеи».' : 'Здесь пока пусто.';
-  list.innerHTML = items.map(s => {
+  empty.innerHTML = tab === 'proposed'
+    ? '<big>🪄</big>Новых сценариев нет — нажмите «Сгенерировать идеи».'
+    : '<big>🫧</big>Здесь пока пусто.';
+  list.innerHTML = items.map((s, idx) => {
     const editable = s.status === 'proposed' || s.status === 'approved';
     const shots = s.shots.map((x,i) => editable
-      ? `<div class="shot"><b>${i*2}–${i*2+2}с</b><div class="f"><input type="text" value="${esc(x.action)}" data-id="${s.id}" data-i="${i}" data-k="action"><input type="text" value="${esc(x.say)}" data-id="${s.id}" data-i="${i}" data-k="say"></div></div>`
-      : `<div class="shot"><b>${i*2}–${i*2+2}с</b><div>${esc(x.action)} — «${esc(x.say)}»</div></div>`).join('');
+      ? `<div class="shot"><b>${i+1}</b><div class="f"><input type="text" value="${esc(x.action)}" aria-label="Действие, кадр ${i+1}" data-id="${s.id}" data-i="${i}" data-k="action"><input class="say" type="text" value="${esc(x.say)}" aria-label="Слово, кадр ${i+1}" data-id="${s.id}" data-i="${i}" data-k="say"></div></div>`
+      : `<div class="shot"><b>${i+1}</b><div class="t">${esc(x.action)} — <i>«${esc(x.say)}»</i></div></div>`).join('');
     let buttons = '';
-    if (s.status === 'proposed') buttons = `<button class="btn ok" data-act="approved" data-id="${s.id}">Одобрить</button><button class="btn bad" data-act="rejected" data-id="${s.id}">Отклонить</button>`;
-    if (s.status === 'approved') buttons = `<button class="btn" data-act="proposed" data-id="${s.id}">Вернуть в новые</button>`;
-    if (s.status === 'rejected') buttons = `<button class="btn" data-act="proposed" data-id="${s.id}">Вернуть</button>`;
-    if (s.status === 'done') buttons = `<span class="loc">Файл: ${esc(s.file||'')}</span>`;
-    return `<article class="card"><h3>${esc(s.title)}</h3><div class="loc">${esc(s.location)}</div>
+    if (s.status === 'proposed') buttons = `<button class="btn ok small" data-act="approved" data-id="${s.id}">✅ Одобрить</button><button class="btn bad small" data-act="rejected" data-id="${s.id}">Отклонить</button>`;
+    if (s.status === 'approved') buttons = `<button class="btn small" data-act="proposed" data-id="${s.id}">↩ Вернуть в новые</button>`;
+    if (s.status === 'rejected') buttons = `<button class="btn small" data-act="proposed" data-id="${s.id}">↩ Вернуть</button>`;
+    const done = s.status === 'done' ? `<span class="status">🎬 Готово</span><span class="file">${esc(s.file||'')}</span>` : '';
+    return `<article class="card"><div class="card-top"><div class="emoji">${emojiFor(s, idx)}</div><h3>${esc(s.title)}</h3></div>
+      <div class="card-body">${done}<div class="loc">${esc(s.location)}</div>
       <div class="shots">${shots}</div>
       <details><summary>Промпт целиком</summary><textarea readonly data-prompt="${s.id}">${esc(buildPrompt(s))}</textarea></details>
-      <div class="row">${buttons}<button class="btn" data-copy="${s.id}">Копировать промпт</button></div></article>`;
+      <div class="row">${buttons}<button class="btn small" data-copy="${s.id}">📋 Промпт</button></div></div></article>`;
   }).join('');
 }
 
@@ -164,15 +256,15 @@ document.addEventListener('click', e => {
   else if (t.dataset.act) setStatus(t.dataset.id, t.dataset.act);
   else if (t.dataset.copy) copy(buildPrompt(view(base.find(b => b.id === t.dataset.copy))), 'Промпт скопирован');
   else if (t.id === 'copyCmd') copy(approvedCommand(), 'Команда скопирована — вставьте её Claude в чат');
-  else if (t.id === 'askNew') copy(NEW_REQUEST, 'Запрос скопирован — вставьте его Claude в чат');
+  else if (t.id === 'askNew') addIdeas();
 });
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.dataset && t.dataset.k) setShot(t.dataset.id, +t.dataset.i, t.dataset.k, t.value);
 });
 
-fetch('scenarios.json?v=' + Date.now()).then(r => r.json()).then(d => { base = d; render(); })
-  .catch(() => { document.getElementById('empty').hidden = false; document.getElementById('empty').textContent = 'Не удалось загрузить scenarios.json (откройте сайт через GitHub Pages или локальный сервер).'; });
+fetch('scenarios.json?v=' + Date.now()).then(r => r.json()).then(d => { fileScenarios = d; base = fileScenarios.concat(custom); render(); })
+  .catch(() => { const el = document.getElementById('empty'); el.hidden = false; el.innerHTML = '<big>😿</big>Не удалось загрузить scenarios.json (откройте сайт через GitHub Pages или локальный сервер).'; });
 </script>
 </body>
 </html>
