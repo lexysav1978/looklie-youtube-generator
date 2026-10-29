@@ -198,6 +198,7 @@ function approvedCommand(items){
     + items.map(s => s.id).join(', ') + '\n\n```json\n' + JSON.stringify(items.map(s => ({ id: s.id, title: s.title, prompt: buildPrompt(s) })), null, 2) + '\n```';
 }
 async function generate(){
+  askNotify();
   const items = queueItems();
   if (!items.length){ toast('Отметьте галочкой сценарии, которые нужно сгенерировать'); return; }
   if (!helperOn){ copy(approvedCommand(items), 'Помощник не запущен — команда скопирована, вставьте её Claude в чат'); return; }
@@ -212,6 +213,39 @@ async function generate(){
   } catch { toast('Не удалось связаться с помощником'); }
 }
 
+// ---------- оповещение о готовом ролике ----------
+let prevStatus = null;   // id -> статус на прошлом опросе (null — первый опрос, о старых роликах не сообщаем)
+function askNotify(){ try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {} }
+function chime(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1318.5].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + i * 0.16;
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.55);
+    });
+  } catch {}
+}
+function notifyDone(id){
+  const s = base.find(b => b.id === id);
+  const title = s ? s.title : id;
+  toast('🎬 Ролик готов: ' + title);
+  chime();
+  try {
+    if ('Notification' in window && Notification.permission === 'granted'){
+      const n = new Notification('Ролик готов', { body: title, icon: 'character/looklie-boy.png', tag: 'done-' + id });
+      n.onclick = () => { window.focus(); open.add(id); render(true); const el = document.querySelector('[data-open="' + id + '"]'); if (el) el.scrollIntoView({ block: 'center' }); n.close(); };
+    }
+  } catch {}
+}
+function checkFinished(){
+  const now = {};
+  Object.values(jobs).forEach(j => { now[j.id] = j.status; });
+  if (prevStatus) Object.keys(now).forEach(id => { if (now[id] === 'done' && prevStatus[id] !== 'done') notifyDone(id); });
+  prevStatus = now;
+}
+
 async function poll(){
   const pill = document.getElementById('helper'), txt = document.getElementById('helperText');
   try {
@@ -219,9 +253,10 @@ async function poll(){
     helperOn = !!h.ok; pill.className = 'pill on'; txt.textContent = 'Помощник подключён · ' + h.outDir;
     const list = (await (await fetch(HELPER + '/jobs')).json()).jobs || [];
     jobs = {}; list.forEach(j => { jobs[j.id] = j; });
+    checkFinished();
     loadModels();
   } catch {
-    helperOn = false; jobs = {}; pill.className = 'pill'; txt.textContent = 'Помощник не запущен — запустите start-server.bat';
+    helperOn = false; jobs = {}; prevStatus = null; pill.className = 'pill'; txt.textContent = 'Помощник не запущен — запустите start-server.bat';
   }
   render();
 }
