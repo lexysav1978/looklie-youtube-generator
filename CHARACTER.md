@@ -27,7 +27,7 @@ He teaches {тема} with hard cuts, one {предмет} per shot:
 6-8s: points to {предмет 4}, says "{Слово4}!"
 8-10s: smiles big, waves, says "{Общее слово}!"
 
-One {предмет} per shot. Slow cute clear movements. Soft child voice. Gentle kids music. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.
+One {предмет} per shot. Slow cute clear movements. Soft child voice. Light soft background music throughout: a gentle cheerful lullaby-style kids melody with ukulele, soft xylophone and glockenspiel, quiet and calm, always lower than his voice. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.
 ```
 
 ## Пример (здания)
@@ -47,7 +47,7 @@ He teaches building names with hard cuts, one building per shot:
 6-8s: points to a round museum with big columns, says "Museum!"
 8-10s: smiles big, waves, says "Buildings!"
 
-One building per shot. Slow cute clear movements. Soft child voice. Gentle kids music. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.
+One building per shot. Slow cute clear movements. Soft child voice. Light soft background music throughout: a gentle cheerful lullaby-style kids melody with ukulele, soft xylophone and glockenspiel, quiet and calm, always lower than his voice. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.
 ```
 
 ## Паспорт героя (референс для других моделей)
