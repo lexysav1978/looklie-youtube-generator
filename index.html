@@ -63,7 +63,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 </header>
 <main>
   <div class="help">
-    <b>Как это работает:</b> здесь вы выбираете и правите сценарии. Нажмите «Одобрить», затем «Скопировать команду» и вставьте её Claude в чат — он сгенерирует видео и положит файлы в папку. Новые идеи: кнопка «Попросить новые сценарии».
+    <b>Как это работает:</b> здесь вы выбираете и правите сценарии. Нажмите «Одобрить», затем «Скопировать команду» и вставьте её Claude в чат — он по очереди сгенерирует видео и положит их в папку «YouTuBe UP!» на рабочем столе. Новые идеи: кнопка «Сгенерировать идеи» — скопируйте запрос и вставьте его Claude, он добавит 10 идей.
   </div>
   <div class="bar" role="tablist" id="tabs"></div>
   <div class="grid" id="list"></div>
@@ -122,10 +122,10 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt
 function approvedCommand(){
   const items = base.map(view).filter(s => s.status === 'approved');
   const payload = items.map(s => ({ id: s.id, title: s.title, prompt: buildPrompt(s) }));
-  return 'Сгенерируй видео по одобренным сценариям (Grok Imagine 1.5 Lite, 9:16, 720p, 10 сек, без референса): '
+  return 'Сгенерируй видео по одобренным сценариям (Grok Imagine 1.5 Lite, 9:16, 720p, 10 сек, без референса), по очереди, готовые файлы клади в папку «YouTuBe UP!» на рабочем столе: '
     + items.map(s => s.id).join(', ') + '\n\n```json\n' + JSON.stringify(payload, null, 2) + '\n```';
 }
-const NEW_REQUEST = 'Предложи 5 новых сценариев для детских видео с нашим мальчиком LOOKLIE по шаблону (4 предмета + финал), добавь их в scenarios.json со статусом proposed и обнови сайт на GitHub.';
+const NEW_REQUEST = 'Сгенерируй 10 новых простых идей для детских видео с нашим мальчиком LOOKLIE (например: «Мальчик собирает грибы», «Мальчик едет на поезде», «Мальчик учит цифры», «Мальчик знакомится с девочкой»). Не повторяй идеи из scenarios.json. Для каждой сделай сценарий по нашему шаблону (5 кадров по 2 секунды), добавь в scenarios.json со статусом proposed и обнови сайт на GitHub.';
 
 function render(){
   const all = base.map(view);
@@ -133,14 +133,14 @@ function render(){
   tabsEl.innerHTML = TABS.map(([k,l]) =>
     `<button class="tab" role="tab" aria-selected="${tab===k}" data-tab="${k}">${l}<span>${all.filter(s=>s.status===k).length}</span></button>`
   ).join('') + '<span class="spacer"></span>'
-    + '<button class="btn" id="askNew">Попросить новые сценарии</button>'
+    + '<button class="btn" id="askNew">Сгенерировать идеи</button>'
     + '<button class="btn primary" id="copyCmd">Скопировать команду</button>';
   document.getElementById('copyCmd').disabled = !all.some(s => s.status === 'approved');
   const items = all.filter(s => s.status === tab);
   const list = document.getElementById('list');
   const empty = document.getElementById('empty');
   empty.hidden = items.length > 0;
-  empty.textContent = tab === 'proposed' ? 'Новых сценариев нет — нажмите «Попросить новые сценарии».' : 'Здесь пока пусто.';
+  empty.textContent = tab === 'proposed' ? 'Новых сценариев нет — нажмите «Сгенерировать идеи».' : 'Здесь пока пусто.';
   list.innerHTML = items.map(s => {
     const editable = s.status === 'proposed' || s.status === 'approved';
     const shots = s.shots.map((x,i) => editable
