@@ -157,7 +157,28 @@ http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   try {
     if (req.method === 'GET' && url === '/health') return send(res, 200, { ok: true, mode: MODE, model: MODE === 'cli' ? CLI_MODEL : MODEL, outDir: OUT_DIR });
-    if (req.method === 'GET' && url === '/jobs') return send(res, 200, { jobs: [...jobs.values()] });
+    if (req.method === 'GET' && url === '/jobs') {
+      const list = [...jobs.values()];
+      for (const f of fs.readdirSync(OUT_DIR)) {
+        if (!/\.mp4$/i.test(f)) continue;
+        const id = f.replace(/\.mp4$/i, '');
+        if (!jobs.has(id)) list.push({ id, title: id, status: 'done', file: path.join(OUT_DIR, f) });
+      }
+      return send(res, 200, { jobs: list });
+    }
+    if (req.method === 'GET' && url.startsWith('/video/')) {
+      const name = path.basename(decodeURIComponent(url.slice(7)));
+      const fp = path.join(OUT_DIR, name);
+      if (!/\.mp4$/i.test(name) || !fs.existsSync(fp)) return send(res, 404, { error: 'no video' });
+      const size = fs.statSync(fp).size;
+      const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
+      let start = 0, end = size - 1, code = 200;
+      if (range) { if (range[1]) start = +range[1]; if (range[2]) end = Math.min(+range[2], size - 1); code = 206; }
+      const h = { 'Content-Type': 'video/mp4', 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1 };
+      if (code === 206) h['Content-Range'] = `bytes ${start}-${end}/${size}`;
+      res.writeHead(code, h);
+      return fs.createReadStream(fp, { start, end }).pipe(res);
+    }
     if (req.method === 'POST' && url === '/generate') {
       const body = await readBody(req);
       const items = Array.isArray(body.items) ? body.items : [];
