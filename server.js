@@ -2,6 +2,7 @@
 // и сохраняет готовые видео в папку. Ключ хранится только в файле .env на вашем компьютере.
 // Запуск: node server.js   (или двойной клик по start-server.bat)
 const http = require('http');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -17,6 +18,9 @@ if (fs.existsSync(envPath)) {
   }
 }
 const KEY = process.env.HF_KEY || env.HF_KEY || '';
+const MODE = process.env.MODE || env.MODE || (KEY ? 'api' : 'cli');   // cli = через Claude CLI и MCP, api = через ключ
+const CLI_MODEL = process.env.CLI_MODEL || env.CLI_MODEL || 'grok_video_v15_lite';
+const CLAUDE_ARGS = process.env.CLAUDE_ARGS || env.CLAUDE_ARGS || '--dangerously-skip-permissions';
 const MODEL = process.env.HF_MODEL || env.HF_MODEL || 'xai/grok-imagine-video/v1.5/reference-to-video';
 const OUT_DIR = process.env.OUT_DIR || env.OUT_DIR || path.join(os.homedir(), 'Desktop', 'YouTuBe UP!');
 const PORT = +(process.env.PORT || env.PORT || 8787);
@@ -25,8 +29,8 @@ const ALLOWED_ORIGINS = ['https://lexysav1978.github.io', 'http://localhost:8765
 const POLL_MS = 8000;
 const TIMEOUT_MS = 20 * 60 * 1000;
 
-if (!KEY.includes(':')) {
-  console.error('Не найден ключ HF_KEY. Создайте файл .env рядом с server.js (см. .env.example): HF_KEY=ID:SECRET');
+if (MODE === 'api' && !KEY.includes(':')) {
+  console.error('Режим api: не найден ключ HF_KEY. Создайте файл .env рядом с server.js (см. .env.example): HF_KEY=ID:SECRET');
   process.exit(1);
 }
 fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -46,7 +50,46 @@ async function hf(url, opts = {}) {
   return data;
 }
 
+// ---------- режим CLI: Claude Code + Higgsfield MCP ----------
+function runClaude(promptText) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('claude', ['-p', ...CLAUDE_ARGS.split(' ').filter(Boolean)], { shell: true, cwd: __dirname });
+    let out = '', err = '';
+    const timer = setTimeout(() => { child.kill(); reject(new Error('Превышено время ожидания Claude CLI')); }, TIMEOUT_MS);
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (err += d));
+    child.on('error', (e) => { clearTimeout(timer); reject(e); });
+    child.on('close', (code) => { clearTimeout(timer); code === 0 ? resolve(out) : reject(new Error((err || out || 'claude завершился с кодом ' + code).trim().slice(0, 400))); });
+    child.stdin.end(promptText);
+  });
+}
+
+async function runJobCli(job) {
+  job.status = 'generating';
+  const ask = [
+    'Сгенерируй одно видео через MCP-инструмент Higgsfield generate_video (без project/folder, без референс-картинок).',
+    'Параметры: model "' + CLI_MODEL + '", aspect_ratio "9:16", resolution "720p", duration 10, count 1.',
+    'Если инструмент предложит пресет (preset_recommendation) — отклони его: повтори вызов с declined_preset_id.',
+    'Если инструмент спросит про unlim — не используй use_unlim, оплата обычными кредитами.',
+    'Дождись готовности через jobs_wait (повторяй, пока не завершится). Ничего больше не делай и не скачивай.',
+    'Последней строкой ответа выведи ровно: RESULT_URL: <ссылка на mp4> (или ERROR: <причина>).',
+    'Промпт для видео (передай как есть, без изменений) между маркерами:',
+    '<<<PROMPT',
+    job.prompt,
+    'PROMPT>>>'
+  ].join('\n');
+  const out = await runClaude(ask);
+  const m = out.match(/RESULT_URL:\s*(https?:\/\/\S+)/);
+  if (!m) { const e = out.match(/ERROR:\s*(.+)/); throw new Error(e ? e[1] : 'Claude не вернул ссылку: ' + out.slice(-300)); }
+  const file = path.join(OUT_DIR, safeName(job.id) + '.mp4');
+  const r = await fetch(m[1].replace(/[)\]>.,]+$/, ''));
+  if (!r.ok) throw new Error('Не удалось скачать видео: HTTP ' + r.status);
+  fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
+  job.file = file; job.status = 'done';
+}
+
 async function runJob(job) {
+  if (MODE === 'cli') return runJobCli(job);
   job.status = 'submitting';
   const sub = await hf(`${API}/${MODEL}`, {
     method: 'POST',
@@ -113,7 +156,7 @@ http.createServer(async (req, res) => {
   if (o && !ALLOWED_ORIGINS.includes(o)) return send(res, 403, { error: 'origin not allowed' });
   const url = req.url.split('?')[0];
   try {
-    if (req.method === 'GET' && url === '/health') return send(res, 200, { ok: true, model: MODEL, outDir: OUT_DIR });
+    if (req.method === 'GET' && url === '/health') return send(res, 200, { ok: true, mode: MODE, model: MODE === 'cli' ? CLI_MODEL : MODEL, outDir: OUT_DIR });
     if (req.method === 'GET' && url === '/jobs') return send(res, 200, { jobs: [...jobs.values()] });
     if (req.method === 'POST' && url === '/generate') {
       const body = await readBody(req);
@@ -133,6 +176,6 @@ http.createServer(async (req, res) => {
   } catch (e) { send(res, 400, { error: String(e.message || e) }); }
 }).listen(PORT, '127.0.0.1', () => {
   console.log(`Помощник запущен: http://localhost:${PORT}`);
-  console.log(`Модель: ${MODEL}`);
+  console.log(`Режим: ${MODE}, модель: ${MODE === 'cli' ? CLI_MODEL : MODEL}`);
   console.log(`Видео сохраняются в: ${OUT_DIR}`);
 });
