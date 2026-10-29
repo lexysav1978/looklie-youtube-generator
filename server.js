@@ -36,6 +36,27 @@ if (MODE === 'api' && !KEY.includes(':')) {
 }
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
+// ---------- модели (все умеют 10 сек и 9:16) ----------
+const MODELS = [
+  { id: 'grok_video_v15_lite', name: 'Grok Imagine 1.5 Lite', args: ['--resolution', '720p'] },
+  { id: 'wan3_0', name: 'Wan 3.0', args: ['--resolution', '720p'], ref: true },
+  { id: 'kling3_0', name: 'Kling 3.0', args: [] },
+  { id: 'kling4_0', name: 'Kling 4.0', args: ['--resolution', '720p'], ref: true, refArgs: ['--mode', 'reference-to-video'] },
+  { id: 'happy_horse_video', name: 'Happy Horse', args: ['--resolution', '720p'] },
+  { id: 'seedance_2_0', name: 'Seedance 2.0', args: ['--resolution', '720p'], ref: true },
+  { id: 'seedance_2_5', name: 'Seedance 2.5', args: ['--resolution', '720p'], ref: true, refArgs: ['--mode', 'omni_reference'] }
+];
+// паспорт героя: клеится референсом ко всем моделям, которые принимают image_references
+const PASSPORT = path.join(__dirname, 'character', 'passport.png');
+const modelById = (id) => MODELS.find((m) => m.id === id) || MODELS.find((m) => m.id === CLI_MODEL) || MODELS[0];
+const modelArgs = (m) => ['--duration', '10', '--aspect_ratio', '9:16', ...m.args, ...(m.ref && fs.existsSync(PASSPORT) ? [...(m.refArgs || []), '--image-references', PASSPORT] : [])];
+
+// запоминаем, какой моделью и за сколько сделан ролик (файл рядом с server.js, в git не попадает)
+const META_PATH = path.join(__dirname, 'jobs.json');
+let meta = {};
+try { meta = JSON.parse(fs.readFileSync(META_PATH, 'utf8')); } catch {}
+function saveMeta(id, model, credits) { meta[id] = { model, credits }; try { fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2)); } catch {} }
+
 // ---------- очередь ----------
 const jobs = new Map();   // id -> {id,title,prompt,status,error,file,requestId}
 const queue = [];
@@ -103,9 +124,24 @@ function runHf(args, input) {
   });
 }
 
+const costCache = {};   // id модели -> {credits, at}
+async function modelCost(m) {
+  const c = costCache[m.id];
+  if (c && Date.now() - c.at < 10 * 60 * 1000) return c.credits;
+  try {
+    const out = await runHf(['generate', 'cost', m.id, '--prompt', 'cost', ...modelArgs(m), '--json'], '');
+    const credits = JSON.parse(out).credits;
+    if (typeof credits === 'number') { costCache[m.id] = { credits, at: Date.now() }; return credits; }
+  } catch {}
+  return c ? c.credits : null;
+}
+async function balance() {
+  try { return JSON.parse(await runHf(['account', 'status', '--json'], '')).credits; } catch { return null; }
+}
+
 async function runJobHf(job) {
   job.status = 'generating';
-  const out = await runHf(['generate', 'create', CLI_MODEL, '--duration', '10', '--aspect_ratio', '9:16', '--resolution', '720p', '--wait', '--wait-timeout', '20m', '--json'], job.prompt);
+  const out = await runHf(['generate', 'create', job.model, ...modelArgs(modelById(job.model)), '--wait', '--wait-timeout', '20m', '--json'], job.prompt);
   let r; try { r = JSON.parse(out); } catch { throw new Error('Не удалось разобрать ответ hf: ' + out.slice(-300)); }
   r = Array.isArray(r) ? r[0] : r;
   if (!r || r.status !== 'completed' || !r.result_url) throw new Error('Статус: ' + (r && r.status));
@@ -114,6 +150,7 @@ async function runJobHf(job) {
   if (!dl.ok) throw new Error('Не удалось скачать видео: HTTP ' + dl.status);
   fs.writeFileSync(file, Buffer.from(await dl.arrayBuffer()));
   job.file = file; job.status = 'done';
+  saveMeta(job.id, job.model, job.credits);
 }
 
 async function runJob(job) {
@@ -186,14 +223,18 @@ http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   try {
     if (req.method === 'GET' && url === '/health') return send(res, 200, { ok: true, mode: MODE, model: MODE !== 'api' ? CLI_MODEL : MODEL, outDir: OUT_DIR });
+    if (req.method === 'GET' && url === '/models') {
+      const [credits, bal] = await Promise.all([Promise.all(MODELS.map(modelCost)), balance()]);
+      return send(res, 200, { default: modelById(CLI_MODEL).id, balance: bal, models: MODELS.map((m, i) => ({ id: m.id, name: m.name, credits: credits[i], ref: !!(m.ref && fs.existsSync(PASSPORT)) })) });
+    }
     if (req.method === 'GET' && url === '/jobs') {
       const list = [...jobs.values()];
       for (const f of fs.readdirSync(OUT_DIR)) {
         if (!/\.mp4$/i.test(f)) continue;
         const id = f.replace(/\.mp4$/i, '');
-        if (!jobs.has(id)) list.push({ id, title: id, status: 'done', file: path.join(OUT_DIR, f) });
+        if (!jobs.has(id)) list.push({ id, title: id, status: 'done', file: path.join(OUT_DIR, f), ...(meta[id] || {}) });
       }
-      return send(res, 200, { jobs: list });
+      return send(res, 200, { jobs: list.map((j) => ({ ...j, modelName: j.model ? modelById(j.model).name : undefined })) });
     }
     if (req.method === 'GET' && url.startsWith('/video/')) {
       const name = path.basename(decodeURIComponent(url.slice(7)));
@@ -216,7 +257,8 @@ http.createServer(async (req, res) => {
         if (!it || !it.id || !it.prompt) continue;
         const existing = jobs.get(it.id);
         if (existing && !['failed', 'done'].includes(existing.status)) continue;   // уже в работе
-        const job = { id: String(it.id), title: String(it.title || it.id), prompt: String(it.prompt), status: 'waiting', error: null, file: null, requestId: null };
+        const m = modelById(it.model);
+        const job = { id: String(it.id), title: String(it.title || it.id), prompt: String(it.prompt), model: m.id, credits: await modelCost(m), status: 'waiting', error: null, file: null, requestId: null };
         jobs.set(job.id, job); queue.push(job); added.push(job.id);
       }
       work();

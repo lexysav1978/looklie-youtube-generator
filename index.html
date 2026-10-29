@@ -31,6 +31,10 @@ button{font:inherit;color:inherit}
 .pill i{width:8px;height:8px;border-radius:50%;background:var(--bad);flex:none}
 .pill.on i{background:var(--ok)}
 .spacer{flex:1}
+.modelsel{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.modelsel select{font:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;max-width:260px}
+.st{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.cost{font:400 12px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
 .btn{border:1px solid var(--line);background:var(--panel);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500}
 .btn:hover{background:var(--soft)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -82,7 +86,9 @@ input.say{font-weight:600}
   .spacer{display:none}
   .pill{order:5;width:100%}
   .line{grid-template-columns:22px 24px 1fr 48px;gap:10px}
-  .line .chip{grid-column:3;grid-row:2;justify-self:start}
+  .line .st{grid-column:3;grid-row:2;align-items:flex-start;flex-direction:row;align-items:center;gap:8px}
+  .modelsel{order:4;width:100%}
+  .modelsel select{flex:1;max-width:none}
   .line .thumb{grid-column:4;grid-row:1 / span 2;width:48px;height:72px}
   .more{padding:4px 14px 16px}
   .more .cols{grid-template-columns:1fr}
@@ -94,6 +100,7 @@ input.say{font-weight:600}
 <header class="top">
   <div class="logo"><img src="character/looklie-boy.png" alt="LOOKLIE">LOOKLIE <span>Студия</span></div>
   <span class="pill" id="helper"><i></i><span id="helperText">Проверяю помощника…</span></span>
+  <label class="modelsel">Модель <select id="model" aria-label="Модель генерации"></select></label>
   <span class="spacer"></span>
   <button class="btn" id="askNew">✨ Сгенерировать идеи</button>
   <button class="btn primary" id="gen">Генерировать</button>
@@ -111,11 +118,16 @@ const CHAR_END = '. Only him. Strictly same look. Very sticky adorable face that
 const EMOJI = { 'skate-learn':'🛹', buildings:'🏙️', 'farm-animals':'🐮', colors:'🎈', fruits:'🍎', vehicles:'🚂', weather:'☀️' };
 const FALLBACK_EMOJI = ['🌟','🚀','🧩','🌈','🦄','🎨','🍄','🔢','🐻','🌳'];
 const JOB_TEXT = { waiting:'Ждёт очереди', submitting:'Отправка…', queued:'В очереди Higgsfield', generating:'Генерируется…' };
-const HELPER = 'http://localhost:8787';
+const HELPER = new URLSearchParams(location.search).get('helper') || 'http://localhost:8787';
+const DEFAULT_MODEL = 'grok_video_v15_lite';
+// до подключения помощника показываем названия без цен; цены приходят от hf (generate cost)
+const FALLBACK_MODELS = [['grok_video_v15_lite','Grok Imagine 1.5 Lite'],['wan3_0','Wan 3.0'],['kling3_0','Kling 3.0'],['kling4_0','Kling 4.0'],['happy_horse_video','Happy Horse'],['seedance_2_0','Seedance 2.0'],['seedance_2_5','Seedance 2.5']].map(([id,name]) => ({ id, name, credits: null }));
 
 let helperOn = false, jobs = {}, base = [], fileScenarios = [];
 let custom = load('lk_custom', []);
 let state = load('lk_state', {});       // id -> {checked, shots}
+let models = FALLBACK_MODELS, balance = null, modelsAt = 0;
+let modelId = load('lk_model', DEFAULT_MODEL);
 let open = new Set();
 let lastSig = '';
 
@@ -125,6 +137,28 @@ function hash(t){ let h = 0; for (const c of t) h = (h * 31 + c.charCodeAt(0)) |
 function emojiFor(s){ return s.emoji || EMOJI[s.id] || FALLBACK_EMOJI[Math.abs(hash(s.id)) % FALLBACK_EMOJI.length]; }
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+function fmt(c){ return c == null ? '—' : (Math.round(c * 10) / 10) + ' кр.'; }
+function modelOf(id){ return models.find(m => m.id === id) || FALLBACK_MODELS.find(m => m.id === id) || models[0]; }
+function price(){ const m = modelOf(modelId); return m ? m.credits : null; }
+function rowCost(s){
+  const j = s.job;
+  if (j && j.status !== 'failed' && j.credits != null) return (j.modelName ? j.modelName + ' · ' : '') + fmt(j.credits);
+  if (s.done) return j && j.modelName ? j.modelName : '';
+  return selectable(s) ? fmt(price()) : '';
+}
+function renderModels(){
+  const sel = document.getElementById('model');
+  if (!models.some(m => m.id === modelId)) modelId = DEFAULT_MODEL;
+  sel.innerHTML = models.map(m => '<option value="' + m.id + '"' + (m.id === modelId ? ' selected' : '') + '>' + esc(m.name) + (m.ref ? ' + паспорт' : '') + (m.credits != null ? ' · ' + fmt(m.credits) : '') + '</option>').join('');
+}
+async function loadModels(){
+  if (Date.now() - modelsAt < 5 * 60 * 1000) return;
+  modelsAt = Date.now();
+  try {
+    const d = await (await fetch(HELPER + '/models')).json();
+    if (Array.isArray(d.models) && d.models.length){ models = d.models; balance = d.balance; renderModels(); render(true); }
+  } catch { modelsAt = 0; }
+}
 function view(s){
   const o = state[s.id] || {};
   const j = jobs[s.id];
@@ -160,19 +194,21 @@ function selectable(s){ return !s.done && !(s.job && !['failed','done'].includes
 function queueItems(){ return base.map(view).filter(s => s.checked && selectable(s)); }
 
 function approvedCommand(items){
-  return 'Сгенерируй видео по одобренным сценариям (Grok Imagine 1.5 Lite, 9:16, 720p, 10 сек, без референса), по очереди, готовые файлы клади в папку «YouTuBe UP!» на рабочем столе: '
+  return 'Сгенерируй видео по одобренным сценариям (' + modelOf(modelId).name + ', 9:16, 720p, 10 сек, без референса), по очереди, готовые файлы клади в папку «YouTuBe UP!» на рабочем столе: '
     + items.map(s => s.id).join(', ') + '\n\n```json\n' + JSON.stringify(items.map(s => ({ id: s.id, title: s.title, prompt: buildPrompt(s) })), null, 2) + '\n```';
 }
 async function generate(){
   const items = queueItems();
   if (!items.length){ toast('Отметьте галочкой сценарии, которые нужно сгенерировать'); return; }
   if (!helperOn){ copy(approvedCommand(items), 'Помощник не запущен — команда скопирована, вставьте её Claude в чат'); return; }
-  if (!confirm('Сгенерировать видео: ' + items.length + ' шт.? Это тратит кредиты Higgsfield. Ролики делаются по очереди.')) return;
+  const p = price();
+  const total = p != null ? ' Спишется ≈ ' + fmt(items.length * p) + (balance != null ? ' (на счёте ' + fmt(balance) + ').' : '.') : '';
+  if (!confirm('Сгенерировать видео: ' + items.length + ' шт. моделью ' + modelOf(modelId).name + '?' + total + ' Ролики делаются по очереди.')) return;
   try {
-    const r = await fetch(HELPER + '/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: items.map(s => ({ id: s.id, title: s.title, prompt: buildPrompt(s) })) }) });
+    const r = await fetch(HELPER + '/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: items.map(s => ({ id: s.id, title: s.title, prompt: buildPrompt(s), model: modelId })) }) });
     const d = await r.json();
     toast('Отправлено в очередь: ' + (d.added || []).length);
-    poll();
+    modelsAt = 0; poll();
   } catch { toast('Не удалось связаться с помощником'); }
 }
 
@@ -183,6 +219,7 @@ async function poll(){
     helperOn = !!h.ok; pill.className = 'pill on'; txt.textContent = 'Помощник подключён · ' + h.outDir;
     const list = (await (await fetch(HELPER + '/jobs')).json()).jobs || [];
     jobs = {}; list.forEach(j => { jobs[j.id] = j; });
+    loadModels();
   } catch {
     helperOn = false; jobs = {}; pill.className = 'pill'; txt.textContent = 'Помощник не запущен — запустите start-server.bat';
   }
@@ -199,7 +236,7 @@ function addIdeas(){
 }
 
 function signature(items){
-  return JSON.stringify([helperOn, [...open], items.map(s => [s.id, s.checked, s.done, s.job ? s.job.status + (s.job.error || '') : ''])]);
+  return JSON.stringify([helperOn, modelId, models.map(m => m.credits), balance, [...open], items.map(s => [s.id, s.checked, s.done, s.job ? s.job.status + (s.job.error || '') + (s.job.model || '') + (s.job.credits || '') : ''])]);
 }
 function render(force){
   const items = base.map(view);
@@ -210,7 +247,9 @@ function render(force){
   const all = document.getElementById('all');
   all.checked = sel.length > 0 && sel.every(s => s.checked);
   all.disabled = !sel.length;
-  document.getElementById('count').textContent = 'Выбрано: ' + queueItems().length + ' из ' + items.length;
+  const nSel = queueItems().length, p = price();
+  document.getElementById('count').textContent = 'Выбрано: ' + nSel + ' из ' + items.length
+    + (nSel && p != null ? ' · ≈ ' + fmt(nSel * p) : '') + (balance != null ? ' · на счёте ' + fmt(balance) : '');
   document.getElementById('gen').disabled = !queueItems().length;
   const ae = document.activeElement; const keep = ae && ae.dataset ? { id: ae.dataset.id, i: ae.dataset.i, k: ae.dataset.k } : null;
 
@@ -232,7 +271,7 @@ function render(force){
       <input type="checkbox" data-check="${s.id}" ${s.checked ? 'checked' : ''} ${selectable(s) ? '' : 'disabled'} aria-label="Одобрить: ${esc(s.title)}">
       <span class="em">${emojiFor(s)}</span>
       <div style="min-width:0"><div class="tt">${esc(s.title)}</div><div class="words">${esc(s.shots.map(x => x.say).join(' · '))}</div></div>
-      <span class="chip ${cls}">${esc(t)}</span>${thumb}</div>${more}</div>`;
+      <span class="st"><span class="chip ${cls}">${esc(t)}</span>${rowCost(s) ? `<small class="cost">${esc(rowCost(s))}</small>` : ''}</span>${thumb}</div>${more}</div>`;
   }).join('') : '<div class="none">Сценариев нет — нажмите «Сгенерировать идеи».</div>';
 
   if (keep && keep.id){ const el = document.querySelector(`[data-id="${keep.id}"][data-i="${keep.i}"][data-k="${keep.k}"]`); if (el) el.focus(); }
@@ -252,6 +291,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.id === 'model'){ modelId = t.value; save('lk_model', modelId); render(true); return; }
   if (t.dataset && t.dataset.check) setChecked(t.dataset.check, t.checked);
   if (t.id === 'all'){ base.map(view).filter(selectable).forEach(s => { state[s.id] = { ...(state[s.id]||{}), checked: t.checked, status: undefined }; }); save('lk_state', state); render(true); }
 });
@@ -266,6 +306,7 @@ document.addEventListener('input', e => {
   if (p) p.textContent = buildPrompt({ ...s, shots });
 });
 
+renderModels();
 fetch('scenarios.json?v=' + Date.now()).then(r => r.json()).then(d => {
   fileScenarios = d; base = fileScenarios.concat(custom); render(true); poll(); setInterval(poll, 6000);
 }).catch(() => { document.getElementById('list').innerHTML = '<div class="none">Не удалось загрузить scenarios.json. Откройте сайт через GitHub Pages или локальный сервер.</div>'; });

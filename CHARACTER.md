@@ -49,3 +49,7 @@ He teaches building names with hard cuts, one building per shot:
 
 One building per shot. Slow cute clear movements. Soft child voice. Gentle kids music. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.
 ```
+
+## Паспорт героя (референс для других моделей)
+Файл `character/passport.png` (2688×1512, gpt_image_2_5, 2k): сверху 4 ракурса в полный рост (спереди, 3/4, профиль, сзади), снизу 6 эмоций (радость, смех, удивление, любопытство, застенчивая улыбка, зевок). Передаётся как референс-картинка в моделях, которые её принимают (в Grok Lite референса нет — там образ задаётся только текстовым блоком персонажа).
+Higgsfield job: a4dd3a0f-53e8-46fb-929f-2059872651f7.
