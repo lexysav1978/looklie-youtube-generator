@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOOKLIE Генератор</title>
+<link rel="icon" href="character/looklie-boy.png">
+<style>
+:root{
+  --bg:#f6f8fc; --card:#fff; --ink:#1c2433; --muted:#6b778c; --line:#e2e8f2;
+  --accent:#ffc800; --accent-ink:#3a2d00; --ok:#1f9d55; --bad:#d64545; --blue:#3b82f6;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#10151f;--card:#18202e;--ink:#eef2f9;--muted:#93a0b8;--line:#27324a;--accent-ink:#2a2000}
+}
+:root[data-theme="dark"]{--bg:#10151f;--card:#18202e;--ink:#eef2f9;--muted:#93a0b8;--line:#27324a;--accent-ink:#2a2000}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:16px;max-width:980px;margin:0 auto}
+header img{width:56px;height:56px;border-radius:14px;object-fit:cover;object-position:top;background:#bfe3ff}
+header h1{font-size:20px;margin:0}
+header p{margin:0;color:var(--muted);font-size:14px}
+main{max-width:980px;margin:0 auto;padding:0 16px 80px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;font-size:14px}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.tab span{opacity:.7;margin-left:4px}
+.spacer{flex:1}
+button{font:inherit}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.bad{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-size:17px}
+.loc{color:var(--muted);font-size:13px}
+.shots{display:flex;flex-direction:column;gap:6px}
+.shot{display:grid;grid-template-columns:44px 1fr;gap:6px;align-items:start;font-size:13px}
+.shot b{color:var(--muted);font-weight:500;padding-top:6px}
+.shot .f{display:flex;flex-direction:column;gap:4px}
+input[type=text],textarea{width:100%;font:inherit;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+textarea{resize:vertical;min-height:70px;font-family:ui-monospace,Consolas,monospace}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.empty{color:var(--muted);padding:40px 0;text-align:center}
+.help{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--muted);margin-bottom:16px}
+.help b{color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+@media(max-width:480px){.spacer{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <img src="character/looklie-boy.png" alt="Персонаж LOOKLIE">
+  <div>
+    <h1>LOOKLIE Генератор</h1>
+    <p>Grok Imagine 1.5 Lite · 9:16 · 720p · 10 сек · English</p>
+  </div>
+</header>
+<main>
+  <div class="help">
+    <b>Как это работает:</b> здесь вы выбираете и правите сценарии. Нажмите «Одобрить», затем «Скопировать команду» и вставьте её Claude в чат — он сгенерирует видео и положит файлы в папку. Новые идеи: кнопка «Попросить новые сценарии».
+  </div>
+  <div class="bar" role="tablist" id="tabs"></div>
+  <div class="grid" id="list"></div>
+  <p class="empty" id="empty" hidden></p>
+</main>
+<div id="toast"></div>
+
+<script>
+const CHAR_START = 'Same super cute toddler boy with big round clear light glasses, huge bright blue sparkling eyes, soft rosy cheeks, tiny freckles, light golden-blond hair in a modern memorable hairstyle (fluffy textured top with a playful upward swoosh quiff, short neat sides), warm biggest smile, tiny body, wearing a cozy sunny-yellow hoodie with the text "LOOKLIE" clearly visible on the chest, light blue rolled-up jeans, small white sneakers';
+const CHAR_END = '. Only him. Strictly same look. Very sticky adorable face that kids can\'t stop watching.';
+const TABS = [
+  ['proposed','Новые'], ['approved','Одобренные'], ['done','Готовые'], ['rejected','Отклонённые']
+];
+
+let base = [];
+let state = load('lk_state', {});      // id -> {status, shots}
+let tab = load('lk_tab', 'proposed');
+
+function load(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }
+function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+function view(s){
+  const o = state[s.id] || {};
+  const status = s.status === 'done' ? 'done' : (o.status || s.status);
+  return { ...s, status, shots: o.shots || s.shots };
+}
+function buildPrompt(s){
+  const extra = s.extra ? ', ' + s.extra : '';
+  const lines = s.shots.map((x,i) => `${i*2}-${i*2+2}s: ${x.action}, says "${x.say}"`).join('\n');
+  return [
+    'Cute 3D Pixar-style toddler video, 10 seconds, bright colors, nursery style.',
+    CHAR_START + extra + CHAR_END,
+    s.location,
+    s.intro,
+    lines,
+    `${s.rule} Slow cute clear movements. Soft child voice. Gentle kids music. No text on screen (except "LOOKLIE" on his clothes). Very simple and toddler-safe.`
+  ].join('\n\n');
+}
+function setStatus(id, status){ state[id] = { ...(state[id]||{}), status }; save('lk_state', state); render(); }
+function setShot(id, i, key, val){
+  const s = view(base.find(b => b.id === id));
+  const shots = s.shots.map(x => ({...x}));
+  shots[i][key] = val;
+  state[id] = { ...(state[id]||{}), shots };
+  save('lk_state', state);
+  const ta = document.querySelector(`[data-prompt="${id}"]`);
+  if (ta) ta.value = buildPrompt({ ...s, shots });
+}
+function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 2200); }
+async function copy(text, msg){
+  try { await navigator.clipboard.writeText(text); toast(msg); }
+  catch { prompt('Скопируйте вручную:', text); }
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function approvedCommand(){
+  const items = base.map(view).filter(s => s.status === 'approved');
+  const payload = items.map(s => ({ id: s.id, title: s.title, prompt: buildPrompt(s) }));
+  return 'Сгенерируй видео по одобренным сценариям (Grok Imagine 1.5 Lite, 9:16, 720p, 10 сек, без референса): '
+    + items.map(s => s.id).join(', ') + '\n\n```json\n' + JSON.stringify(payload, null, 2) + '\n```';
+}
+const NEW_REQUEST = 'Предложи 5 новых сценариев для детских видео с нашим мальчиком LOOKLIE по шаблону (4 предмета + финал), добавь их в scenarios.json со статусом proposed и обнови сайт на GitHub.';
+
+function render(){
+  const all = base.map(view);
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = TABS.map(([k,l]) =>
+    `<button class="tab" role="tab" aria-selected="${tab===k}" data-tab="${k}">${l}<span>${all.filter(s=>s.status===k).length}</span></button>`
+  ).join('') + '<span class="spacer"></span>'
+    + '<button class="btn" id="askNew">Попросить новые сценарии</button>'
+    + '<button class="btn primary" id="copyCmd">Скопировать команду</button>';
+  document.getElementById('copyCmd').disabled = !all.some(s => s.status === 'approved');
+  const items = all.filter(s => s.status === tab);
+  const list = document.getElementById('list');
+  const empty = document.getElementById('empty');
+  empty.hidden = items.length > 0;
+  empty.textContent = tab === 'proposed' ? 'Новых сценариев нет — нажмите «Попросить новые сценарии».' : 'Здесь пока пусто.';
+  list.innerHTML = items.map(s => {
+    const editable = s.status === 'proposed' || s.status === 'approved';
+    const shots = s.shots.map((x,i) => editable
+      ? `<div class="shot"><b>${i*2}–${i*2+2}с</b><div class="f"><input type="text" value="${esc(x.action)}" data-id="${s.id}" data-i="${i}" data-k="action"><input type="text" value="${esc(x.say)}" data-id="${s.id}" data-i="${i}" data-k="say"></div></div>`
+      : `<div class="shot"><b>${i*2}–${i*2+2}с</b><div>${esc(x.action)} — «${esc(x.say)}»</div></div>`).join('');
+    let buttons = '';
+    if (s.status === 'proposed') buttons = `<button class="btn ok" data-act="approved" data-id="${s.id}">Одобрить</button><button class="btn bad" data-act="rejected" data-id="${s.id}">Отклонить</button>`;
+    if (s.status === 'approved') buttons = `<button class="btn" data-act="proposed" data-id="${s.id}">Вернуть в новые</button>`;
+    if (s.status === 'rejected') buttons = `<button class="btn" data-act="proposed" data-id="${s.id}">Вернуть</button>`;
+    if (s.status === 'done') buttons = `<span class="loc">Файл: ${esc(s.file||'')}</span>`;
+    return `<article class="card"><h3>${esc(s.title)}</h3><div class="loc">${esc(s.location)}</div>
+      <div class="shots">${shots}</div>
+      <details><summary>Промпт целиком</summary><textarea readonly data-prompt="${s.id}">${esc(buildPrompt(s))}</textarea></details>
+      <div class="row">${buttons}<button class="btn" data-copy="${s.id}">Копировать промпт</button></div></article>`;
+  }).join('');
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.tab){ tab = t.dataset.tab; save('lk_tab', tab); render(); }
+  else if (t.dataset.act) setStatus(t.dataset.id, t.dataset.act);
+  else if (t.dataset.copy) copy(buildPrompt(view(base.find(b => b.id === t.dataset.copy))), 'Промпт скопирован');
+  else if (t.id === 'copyCmd') copy(approvedCommand(), 'Команда скопирована — вставьте её Claude в чат');
+  else if (t.id === 'askNew') copy(NEW_REQUEST, 'Запрос скопирован — вставьте его Claude в чат');
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.k) setShot(t.dataset.id, +t.dataset.i, t.dataset.k, t.value);
+});
+
+fetch('scenarios.json?v=' + Date.now()).then(r => r.json()).then(d => { base = d; render(); })
+  .catch(() => { document.getElementById('empty').hidden = false; document.getElementById('empty').textContent = 'Не удалось загрузить scenarios.json (откройте сайт через GitHub Pages или локальный сервер).'; });
+</script>
+</body>
+</html>

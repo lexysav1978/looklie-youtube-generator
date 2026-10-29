@@ -1,0 +1,109 @@
+[
+  {
+    "id": "skate-learn",
+    "title": "Мальчик учится кататься на скейте",
+    "status": "done",
+    "file": "output/skate-test-noref.mp4",
+    "extra": "plus a tiny bright helmet and soft knee pads",
+    "location": "Bright colorful kids skate park, soft sunlight, smooth pastel ramps, big cute friendly 3D shapes.",
+    "intro": "He learns to skateboard with hard cuts, one step per shot:",
+    "rule": "One step per shot.",
+    "shots": [
+      { "action": "stands next to a little red skateboard, points to it", "say": "Skateboard!" },
+      { "action": "carefully puts one foot on the board, wobbles a little", "say": "Oops!" },
+      { "action": "pushes with his other foot, rolls slowly", "say": "Roll!" },
+      { "action": "balances with arms out, rolls smoothly", "say": "Balance!" },
+      { "action": "smiles big, gives a thumbs up", "say": "I did it!" }
+    ]
+  },
+  {
+    "id": "buildings",
+    "title": "Здания в городе",
+    "status": "proposed",
+    "location": "Bright colorful kids city, soft sunlight, big cute friendly 3D buildings.",
+    "intro": "He teaches building names with hard cuts, one building per shot:",
+    "rule": "One building per shot.",
+    "shots": [
+      { "action": "points to a cozy little house with a red roof", "say": "House!" },
+      { "action": "points to a bright colorful shop with big windows", "say": "Shop!" },
+      { "action": "points to a cute library with books in the windows", "say": "Library!" },
+      { "action": "points to a round museum with big columns", "say": "Museum!" },
+      { "action": "smiles big, waves", "say": "Buildings!" }
+    ]
+  },
+  {
+    "id": "farm-animals",
+    "title": "Животные на ферме",
+    "status": "proposed",
+    "location": "Bright colorful toy farm, green meadow, red barn, soft sunlight, big cute friendly 3D animals.",
+    "intro": "He teaches farm animal names with hard cuts, one animal per shot:",
+    "rule": "One animal per shot.",
+    "shots": [
+      { "action": "points to a fluffy cow with a little bell", "say": "Cow!" },
+      { "action": "points to a round pink pig playing in a puddle", "say": "Pig!" },
+      { "action": "points to a yellow duckling by a tiny pond", "say": "Duck!" },
+      { "action": "points to a soft white sheep with curly wool", "say": "Sheep!" },
+      { "action": "smiles big, waves", "say": "Animals!" }
+    ]
+  },
+  {
+    "id": "colors",
+    "title": "Цвета и воздушные шарики",
+    "status": "proposed",
+    "location": "Bright colorful kids party room, soft sunlight, floating shiny 3D balloons.",
+    "intro": "He teaches colors with hard cuts, one color per shot:",
+    "rule": "One color per shot.",
+    "shots": [
+      { "action": "points to a big shiny red balloon", "say": "Red!" },
+      { "action": "points to a big shiny blue balloon", "say": "Blue!" },
+      { "action": "points to a big shiny yellow balloon", "say": "Yellow!" },
+      { "action": "points to a big shiny green balloon", "say": "Green!" },
+      { "action": "smiles big, waves with all balloons behind him", "say": "Colors!" }
+    ]
+  },
+  {
+    "id": "fruits",
+    "title": "Фрукты на кухне",
+    "status": "proposed",
+    "location": "Bright colorful toy kitchen, soft sunlight, big cute friendly 3D fruits on a wooden table.",
+    "intro": "He teaches fruit names with hard cuts, one fruit per shot:",
+    "rule": "One fruit per shot.",
+    "shots": [
+      { "action": "holds up a shiny red apple", "say": "Apple!" },
+      { "action": "holds up a happy yellow banana", "say": "Banana!" },
+      { "action": "holds up a round orange", "say": "Orange!" },
+      { "action": "holds up a sweet red strawberry", "say": "Strawberry!" },
+      { "action": "smiles big, waves", "say": "Fruits!" }
+    ]
+  },
+  {
+    "id": "vehicles",
+    "title": "Транспорт на дороге",
+    "status": "proposed",
+    "location": "Bright colorful toy town road, soft sunlight, big cute friendly 3D vehicles with smiling faces.",
+    "intro": "He teaches vehicle names with hard cuts, one vehicle per shot:",
+    "rule": "One vehicle per shot.",
+    "shots": [
+      { "action": "points to a little blue car", "say": "Car!" },
+      { "action": "points to a big yellow school bus", "say": "Bus!" },
+      { "action": "points to a cute red train", "say": "Train!" },
+      { "action": "points to a tiny white airplane in the sky", "say": "Plane!" },
+      { "action": "smiles big, waves", "say": "Vehicles!" }
+    ]
+  },
+  {
+    "id": "weather",
+    "title": "Погода",
+    "status": "proposed",
+    "location": "Bright colorful toy meadow, big cute friendly 3D sky with smiling weather characters.",
+    "intro": "He teaches weather words with hard cuts, one weather per shot:",
+    "rule": "One weather per shot.",
+    "shots": [
+      { "action": "points up to a smiling golden sun", "say": "Sun!" },
+      { "action": "holds a little umbrella under soft gentle rain", "say": "Rain!" },
+      { "action": "points to a fluffy white cloud", "say": "Cloud!" },
+      { "action": "catches a gentle snowflake on his mitten", "say": "Snow!" },
+      { "action": "smiles big, waves", "say": "Weather!" }
+    ]
+  }
+]
