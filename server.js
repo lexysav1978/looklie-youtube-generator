@@ -51,18 +51,31 @@ const PASSPORT = path.join(__dirname, 'character', 'passport.png');
 const modelById = (id) => MODELS.find((m) => m.id === id) || MODELS.find((m) => m.id === CLI_MODEL) || MODELS[0];
 const modelArgs = (m) => ['--duration', '10', '--aspect_ratio', '9:16', ...m.args, ...(m.ref && fs.existsSync(PASSPORT) ? [...(m.refArgs || []), '--image-references', PASSPORT] : [])];
 
-// запоминаем, какой моделью и за сколько сделан ролик (файл рядом с server.js, в git не попадает)
+// У сценария может быть несколько роликов (версий): fruits.mp4, fruits--v2.mp4, fruits--v3.mp4 …
+// Для каждой версии запоминаем сценарий, модель, цену и промпт (файл рядом с server.js, в git не попадает).
 const META_PATH = path.join(__dirname, 'jobs.json');
 let meta = {};
 try { meta = JSON.parse(fs.readFileSync(META_PATH, 'utf8')); } catch {}
-function saveMeta(id, model, credits) { meta[id] = { model, credits }; try { fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2)); } catch {} }
+function saveMeta(job) {
+  meta[job.id] = { scenario: job.scenario, model: job.model, credits: job.credits, prompt: job.prompt };
+  try { fs.writeFileSync(META_PATH, JSON.stringify(meta, null, 2)); } catch {}
+}
+const scenarioOf = (key) => (meta[key] && meta[key].scenario) || key.replace(/--v\d+$/, '');
 
 // ---------- очередь ----------
-const jobs = new Map();   // id -> {id,title,prompt,status,error,file,requestId}
+const jobs = new Map();   // id версии (= имя файла без .mp4) -> {id,scenario,title,prompt,model,credits,status,error,file}
 const queue = [];
 let running = false;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const safeName = (s) => String(s).replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 60);
+// первое свободное имя версии: fruits, потом fruits--v2, fruits--v3 …
+function nextKey(scenario) {
+  const base = safeName(scenario);
+  for (let n = 1; ; n++) {
+    const key = n === 1 ? base : base + '--v' + n;
+    if (!jobs.has(key) && !fs.existsSync(path.join(OUT_DIR, key + '.mp4'))) return key;
+  }
+}
 
 async function hf(url, opts = {}) {
   const res = await fetch(url, { ...opts, headers: { Authorization: `Key ${KEY}`, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
@@ -108,6 +121,7 @@ async function runJobCli(job) {
   if (!r.ok) throw new Error('Не удалось скачать видео: HTTP ' + r.status);
   fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
   job.file = file; job.status = 'done';
+  saveMeta(job);
 }
 
 // ---------- режим hf: Higgsfield CLI (как в проекте «Автоматизация Контента»), вход уже выполнен ----------
@@ -150,7 +164,7 @@ async function runJobHf(job) {
   if (!dl.ok) throw new Error('Не удалось скачать видео: HTTP ' + dl.status);
   fs.writeFileSync(file, Buffer.from(await dl.arrayBuffer()));
   job.file = file; job.status = 'done';
-  saveMeta(job.id, job.model, job.credits);
+  saveMeta(job);
 }
 
 async function runJob(job) {
@@ -178,6 +192,7 @@ async function runJob(job) {
       if (!r.ok) throw new Error('Не удалось скачать видео: HTTP ' + r.status);
       fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
       job.file = file; job.status = 'done';
+      saveMeta(job);
       return;
     }
     if (['failed', 'nsfw', 'canceled'].includes(st.status)) throw new Error(`Статус ${st.status}${st.error ? ': ' + JSON.stringify(st.error) : ''}`);
@@ -232,9 +247,10 @@ http.createServer(async (req, res) => {
       for (const f of fs.readdirSync(OUT_DIR)) {
         if (!/\.mp4$/i.test(f)) continue;
         const id = f.replace(/\.mp4$/i, '');
-        if (!jobs.has(id)) list.push({ id, title: id, status: 'done', file: path.join(OUT_DIR, f), ...(meta[id] || {}) });
+        if (!jobs.has(id)) list.push({ id, title: id, status: 'done', file: path.join(OUT_DIR, f), ...(meta[id] || {}), scenario: scenarioOf(id) });
       }
-      return send(res, 200, { jobs: list.map((j) => ({ ...j, modelName: j.model ? modelById(j.model).name : undefined })) });
+      const doneAt = (j) => { try { return j.status === 'done' && j.file ? fs.statSync(j.file).mtimeMs : undefined; } catch { return undefined; } };
+      return send(res, 200, { jobs: list.map((j) => ({ ...j, modelName: j.model ? modelById(j.model).name : undefined, doneAt: doneAt(j) })) });
     }
     if (req.method === 'GET' && url.startsWith('/video/')) {
       const name = path.basename(decodeURIComponent(url.slice(7)));
@@ -255,10 +271,12 @@ http.createServer(async (req, res) => {
       const added = [];
       for (const it of items) {
         if (!it || !it.id || !it.prompt) continue;
-        const existing = jobs.get(it.id);
-        if (existing && !['failed', 'done'].includes(existing.status)) continue;   // уже в работе
+        const scenario = String(it.id);
+        // обычный запуск не дублирует сценарий, который уже в работе; перегенерация (regen) всегда даёт новую версию
+        const busy = [...jobs.values()].some((j) => j.scenario === scenario && !['failed', 'done'].includes(j.status));
+        if (busy && !it.regen) continue;
         const m = modelById(it.model);
-        const job = { id: String(it.id), title: String(it.title || it.id), prompt: String(it.prompt), model: m.id, credits: await modelCost(m), status: 'waiting', error: null, file: null, requestId: null };
+        const job = { id: nextKey(scenario), scenario, title: String(it.title || scenario), prompt: String(it.prompt), model: m.id, credits: await modelCost(m), status: 'waiting', error: null, file: null, requestId: null };
         jobs.set(job.id, job); queue.push(job); added.push(job.id);
       }
       work();

@@ -43,13 +43,53 @@ button{font:inherit;color:inherit}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 :focus-visible{outline:2px solid var(--busy);outline-offset:2px}
 
-main{max-width:980px;margin:0 auto;padding:20px 16px 80px}
+main{max-width:1320px;margin:0 auto;padding:20px 16px 80px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.side{position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;padding-bottom:4px}
+.colhead{display:flex;align-items:center;gap:12px;padding:0 4px 12px;color:var(--muted);font-size:14px;min-height:30px;flex-wrap:wrap}
+.colhead h2{margin:0;font-size:15px;font-weight:600;color:var(--ink)}
+.ready{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;cursor:pointer;padding:0;text-align:left;display:flex;flex-direction:column}
+.card:hover{border-color:var(--muted)}
+.card .pv{width:100%;aspect-ratio:9/16;object-fit:cover;background:var(--soft);display:grid;place-items:center;font-size:30px;border-bottom:1px solid var(--line)}
+.card .meta{padding:8px 10px 10px;display:grid;gap:2px;min-width:0}
+.card .tt{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card small{font:400 11px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:36px 20px;text-align:center;color:var(--muted);font-size:14px}
+dialog#card{border:0;padding:0;border-radius:18px;background:var(--panel);color:var(--ink);width:min(880px,94vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog#card::backdrop{background:rgba(10,12,16,.55)}
+.mc{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;padding:20px}
+.mc video,.mc .noVideo{width:100%;aspect-ratio:9/16;border-radius:12px;background:#000;display:block}
+.mc .noVideo{background:transparent}
+.mc .info{display:grid;gap:12px;align-content:start;min-width:0}
+.mc h3{margin:0;font-size:18px;font-weight:600;padding-right:36px}
+.mc .facts{display:flex;flex-wrap:wrap;gap:6px}
+.mc details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.mc details .prompt{margin-top:8px}
+.vers{display:grid;gap:6px}
+.ver{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 10px;font-size:13px;cursor:pointer}
+.ver:hover{background:var(--soft)}
+.ver.sel{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.ver[disabled]{cursor:default;background:var(--soft)}
+.ver b{font-weight:600}
+.ver small{font:400 11px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
+.ver .err-note{grid-column:1 / -1}
+.card .badges{position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap}
+.card{position:relative}
+.card .badges .chip{background:rgba(255,255,255,.92);color:#16181d;font-size:11px;padding:3px 8px}
+.card .badges .chip.busy{background:rgba(59,130,246,.92);color:#fff}
+.regen{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px;background:var(--bg)}
+.regen h4{margin:0;font-size:14px;font-weight:600}
+.regen select{font:inherit;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px;width:100%}
+.regen textarea{width:100%;min-height:150px;resize:vertical;border-radius:10px;border:1px solid var(--line);background:var(--code);color:var(--code-ink);padding:10px 12px;font:400 12px/1.6 "JetBrains Mono",ui-monospace,Consolas,monospace}
+.regen textarea:focus{outline:2px solid var(--busy);outline-offset:1px}
+.x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:18px;line-height:1}
 .bar{display:flex;align-items:center;gap:12px;padding:0 4px 12px;color:var(--muted);font-size:14px}
 .bar label{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink);font-weight:500}
 .list{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
 .row{border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:0}
-.line{display:grid;grid-template-columns:24px 28px 1fr auto 56px;gap:12px;align-items:center;padding:10px 14px;cursor:pointer}
+.line{display:grid;grid-template-columns:24px 28px 1fr auto;gap:12px;align-items:center;padding:10px 14px;cursor:pointer}
 .line:hover{background:var(--soft)}
 input[type=checkbox]{width:18px;height:18px;accent-color:#16181d;cursor:pointer;margin:0}
 .em{font-size:22px;text-align:center}
@@ -63,7 +103,6 @@ input[type=checkbox]{width:18px;height:18px;accent-color:#16181d;cursor:pointer;
 .thumb{width:56px;height:84px;border-radius:8px;background:var(--soft);border:1px solid var(--line);object-fit:cover;display:grid;place-items:center;color:var(--muted);font-size:11px;overflow:hidden}
 video.thumb{display:block}
 .more{padding:4px 14px 16px 66px;display:grid;gap:12px}
-.more .cols{display:grid;grid-template-columns:1fr 240px;gap:18px;align-items:start}
 .shots{border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .shot{display:grid;grid-template-columns:54px 1fr 130px;gap:8px;align-items:center;padding:4px 8px;border-bottom:1px solid var(--line)}
 .shot:last-child{border-bottom:0}
@@ -85,14 +124,19 @@ input.say{font-weight:600}
   .top{padding:10px 14px}
   .spacer{display:none}
   .pill{order:5;width:100%}
-  .line{grid-template-columns:22px 24px 1fr 48px;gap:10px}
-  .line .st{grid-column:3;grid-row:2;align-items:flex-start;flex-direction:row;align-items:center;gap:8px}
+  .line{grid-template-columns:22px 24px 1fr;gap:10px}
+  .line .st{grid-column:3;grid-row:2;flex-direction:row;align-items:center;gap:8px}
   .modelsel{order:4;width:100%}
   .modelsel select{flex:1;max-width:none}
-  .line .thumb{grid-column:4;grid-row:1 / span 2;width:48px;height:72px}
   .more{padding:4px 14px 16px}
-  .more .cols{grid-template-columns:1fr}
   .shot{grid-template-columns:1fr;gap:2px}
+  .ready{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mc{grid-template-columns:1fr;padding:16px}
+  .mc video,.mc .noVideo{max-height:62vh;width:auto;margin:0 auto}
+}
+@media(max-width:960px){
+  .split{grid-template-columns:1fr}
+  .side{position:static;max-height:none;overflow:visible}
 }
 </style>
 </head>
@@ -105,10 +149,17 @@ input.say{font-weight:600}
   <button class="btn" id="askNew">✨ Сгенерировать идеи</button>
   <button class="btn primary" id="gen">Генерировать</button>
 </header>
-<main>
-  <div class="bar"><label><input type="checkbox" id="all"> Выбрать все</label><span id="count"></span></div>
-  <div class="list" id="list"></div>
+<main class="split">
+  <section aria-labelledby="hTodo">
+    <div class="colhead"><h2 id="hTodo">Сценарии</h2><label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink)"><input type="checkbox" id="all"> Выбрать все</label><span id="count"></span></div>
+    <div class="list" id="list"></div>
+  </section>
+  <section class="side" aria-labelledby="hReady">
+    <div class="colhead"><h2 id="hReady">Готовые</h2><span id="readyCount"></span></div>
+    <div id="ready"></div>
+  </section>
 </main>
+<dialog id="card" aria-labelledby="cardTitle"><div id="cardBody" style="position:relative"></div></dialog>
 <div id="toast" role="status"></div>
 
 <script src="generator.js"></script>
@@ -123,7 +174,8 @@ const DEFAULT_MODEL = 'grok_video_v15_lite';
 // до подключения помощника показываем названия без цен; цены приходят от hf (generate cost)
 const FALLBACK_MODELS = [['grok_video_v15_lite','Grok Imagine 1.5 Lite'],['wan3_0','Wan 3.0'],['kling3_0','Kling 3.0'],['kling4_0','Kling 4.0'],['happy_horse_video','Happy Horse'],['seedance_2_0','Seedance 2.0'],['seedance_2_5','Seedance 2.5']].map(([id,name]) => ({ id, name, credits: null }));
 
-let helperOn = false, jobs = {}, base = [], fileScenarios = [];
+let helperOn = false, jobs = {}, vers = {}, base = [], fileScenarios = [];   // jobs: id версии -> задание; vers: сценарий -> его версии
+let cardId = null, cardVer = null;   // открытая карточка и выбранная в ней версия
 let custom = load('lk_custom', []);
 let state = load('lk_state', {});       // id -> {checked, shots}
 let models = FALLBACK_MODELS, balance = null, modelsAt = 0;
@@ -161,10 +213,14 @@ async function loadModels(){
 }
 function view(s){
   const o = state[s.id] || {};
-  const j = jobs[s.id];
-  const done = s.status === 'done' || (j && j.status === 'done');
+  const all = vers[s.id] || [];
+  const versions = all.filter(j => j.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));   // свежие первыми
+  const active = all.filter(j => !['done','failed'].includes(j.status));
+  const failed = all.filter(j => j.status === 'failed');
+  const job = active[0] || versions[0] || failed[failed.length - 1];
+  const done = s.status === 'done' || versions.length > 0;
   const checked = !!(o.checked || o.status === 'approved');
-  return { ...s, done, checked, job: j, shots: o.shots || s.shots };
+  return { ...s, done, checked, job, versions, active, failed, shots: o.shots || s.shots };
 }
 function buildPrompt(s){
   const extra = s.extra ? ', ' + s.extra : '';
@@ -227,15 +283,17 @@ function chime(){
     });
   } catch {}
 }
-function notifyDone(id){
-  const s = base.find(b => b.id === id);
-  const title = s ? s.title : id;
+function notifyDone(key){
+  const j = jobs[key] || {};
+  const sc = j.scenario || key;
+  const s = base.find(b => b.id === sc);
+  const title = (s ? s.title : sc) + (j.modelName ? ' · ' + j.modelName : '');
   toast('🎬 Ролик готов: ' + title);
   chime();
   try {
     if ('Notification' in window && Notification.permission === 'granted'){
-      const n = new Notification('Ролик готов', { body: title, icon: 'character/looklie-boy.png', tag: 'done-' + id });
-      n.onclick = () => { window.focus(); open.add(id); render(true); const el = document.querySelector('[data-open="' + id + '"]'); if (el) el.scrollIntoView({ block: 'center' }); n.close(); };
+      const n = new Notification('Ролик готов', { body: title, icon: 'character/looklie-boy.png', tag: 'done-' + key });
+      n.onclick = () => { window.focus(); openCard(sc, key); n.close(); };
     }
   } catch {}
 }
@@ -252,11 +310,12 @@ async function poll(){
     const h = await (await fetch(HELPER + '/health')).json();
     helperOn = !!h.ok; pill.className = 'pill on'; txt.textContent = 'Помощник подключён · ' + h.outDir;
     const list = (await (await fetch(HELPER + '/jobs')).json()).jobs || [];
-    jobs = {}; list.forEach(j => { jobs[j.id] = j; });
+    jobs = {}; vers = {};
+    list.forEach(j => { jobs[j.id] = j; const sc = j.scenario || j.id; (vers[sc] = vers[sc] || []).push(j); });
     checkFinished();
     loadModels();
   } catch {
-    helperOn = false; jobs = {}; prevStatus = null; pill.className = 'pill'; txt.textContent = 'Помощник не запущен — запустите start-server.bat';
+    helperOn = false; jobs = {}; vers = {}; prevStatus = null; pill.className = 'pill'; txt.textContent = 'Помощник не запущен — запустите start-server.bat';
   }
   render();
 }
@@ -271,8 +330,95 @@ function addIdeas(){
 }
 
 function signature(items){
-  return JSON.stringify([helperOn, modelId, models.map(m => m.credits), balance, [...open], items.map(s => [s.id, s.checked, s.done, s.job ? s.job.status + (s.job.error || '') + (s.job.model || '') + (s.job.credits || '') : ''])]);
+  return JSON.stringify([helperOn, modelId, models.map(m => m.credits), balance, [...open], items.map(s => [s.id, s.checked, s.done,
+    (vers[s.id] || []).map(j => [j.id, j.status, j.error, j.model, j.credits, j.doneAt])])]);
 }
+function videoSrc(key){ return `${HELPER}/video/${encodeURIComponent(key)}.mp4`; }
+function when(ms){ return ms ? new Date(ms).toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : ''; }
+function doneAt(s){ return (s.versions[0] && s.versions[0].doneAt) || 0; }
+function plural(n, one, few, many){ const a = n % 10, b = n % 100; return n + ' ' + (a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many); }
+function verLine(j){ return [j.modelName || (j.model ? modelOf(j.model).name : ''), j.credits != null ? fmt(j.credits) : ''].filter(Boolean).join(' · '); }
+
+function renderReady(items){
+  const ready = items.filter(s => s.done).sort((a, b) => doneAt(b) - doneAt(a));   // свежие сверху
+  document.getElementById('readyCount').textContent = ready.length ? ready.length + ' шт.' : '';
+  document.getElementById('ready').innerHTML = ready.length ? '<div class="ready">' + ready.map(s => {
+    const last = s.versions[0];
+    const pv = helperOn ? `<video class="pv" src="${videoSrc(last ? last.id : s.id)}#t=0.1" preload="metadata" muted playsinline></video>` : `<div class="pv">${emojiFor(s)}</div>`;
+    const meta = esc(last ? verLine(last) : '') + '</small><small>' + esc(when(doneAt(s)));
+    const badges = (s.versions.length > 1 ? `<span class="chip">${plural(s.versions.length, 'версия', 'версии', 'версий')}</span>` : '')
+      + (s.active.length ? `<span class="chip busy">Генерируется…</span>` : '');
+    return `<button class="card" data-card="${s.id}" aria-label="Открыть: ${esc(s.title)}">${pv}${badges ? `<span class="badges">${badges}</span>` : ''}<span class="meta"><span class="tt">${emojiFor(s)} ${esc(s.title)}</span><small>${meta}</small></span></button>`;
+  }).join('') + '</div>' : '<div class="empty">Готовые ролики появятся здесь</div>';
+}
+
+// ---------- карточка готового сценария: версии + перегенерация ----------
+function cardScenario(){ return base.map(view).find(b => b.id === cardId); }
+function verNumbers(s){ const m = {}; s.versions.slice().reverse().forEach((j, i) => { m[j.id] = i + 1; }); return m; }   // старейшая = версия 1
+function renderCardVers(){
+  const s = cardScenario(); const box = document.getElementById('cardVers');
+  if (!s || !box) return;
+  const num = verNumbers(s);
+  const rows = s.active.map(j => `<button class="ver" disabled><b>Новая</b><span>${esc(verLine(j))}</span><span class="chip busy">${esc(JOB_TEXT[j.status] || j.status)}</span></button>`)
+    .concat(s.versions.map(j => `<button class="ver${j.id === cardVer ? ' sel' : ''}" data-ver="${j.id}"><b>Версия ${num[j.id]}</b><span>${esc(verLine(j) || 'модель неизвестна')}</span><small>${esc(when(j.doneAt))}</small></button>`))
+    .concat(s.failed.map(j => `<button class="ver" disabled><b>Ошибка</b><span>${esc(verLine(j))}</span><span class="chip err">не вышло</span><span class="err-note">${esc(j.error || '')}</span></button>`));
+  box.innerHTML = rows.join('') || '<div class="file">Версий нет</div>';
+}
+function showVersion(key){
+  const s = cardScenario(); if (!s) return;
+  cardVer = key;
+  const j = jobs[key] || {};
+  document.getElementById('cardPlayer').innerHTML = helperOn
+    ? `<video src="${videoSrc(key)}" controls autoplay playsinline></video>`
+    : `<div class="noVideo">Помощник не запущен — запустите его, чтобы посмотреть видео</div>`;
+  document.getElementById('cardPrompt').textContent = j.prompt || buildPrompt(s);
+  document.getElementById('cardFile').textContent = j.file || s.file || '';
+  renderCardVers();
+}
+function regenLabel(){
+  const m = modelOf(document.getElementById('regenModel').value);
+  document.getElementById('regenBtn').textContent = 'Перегенерировать' + (m && m.credits != null ? ' · ' + fmt(m.credits) : '');
+}
+function openCard(id, key){
+  const s = base.map(view).find(b => b.id === id);
+  if (!s) return;
+  cardId = id;
+  const ver = key || (s.versions[0] ? s.versions[0].id : id);
+  const startPrompt = (jobs[ver] && jobs[ver].prompt) || buildPrompt(s);
+  document.getElementById('cardBody').innerHTML = `<button class="x" data-close aria-label="Закрыть">×</button>
+    <div class="mc"><div id="cardPlayer"></div><div class="info">
+      <h3 id="cardTitle">${emojiFor(s)} ${esc(s.title)}</h3>
+      <div class="vers" id="cardVers"></div>
+      <details><summary>Промпт выбранной версии</summary><div class="prompt" id="cardPrompt"></div></details>
+      <div class="regen">
+        <h4>Перегенерировать</h4>
+        <select id="regenModel" aria-label="Модель для перегенерации">${models.map(m => `<option value="${m.id}"${m.id === modelId ? ' selected' : ''}>${esc(m.name)}${m.ref ? ' + паспорт' : ''}${m.credits != null ? ' · ' + fmt(m.credits) : ''}</option>`).join('')}</select>
+        <textarea id="regenPrompt" aria-label="Промпт для перегенерации" spellcheck="false">${esc(startPrompt)}</textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="regenBtn">Перегенерировать</button><button class="btn" data-copy-text>Копировать промпт</button></div>
+      </div>
+      <div class="file" id="cardFile"></div>
+    </div></div>`;
+  regenLabel();
+  showVersion(ver);
+  const d = document.getElementById('card');
+  if (!d.open) d.showModal();
+}
+async function regenerate(){
+  const s = cardScenario(); if (!s) return;
+  if (!helperOn){ toast('Помощник не запущен — запустите start-server.bat'); return; }
+  const model = document.getElementById('regenModel').value, prompt = document.getElementById('regenPrompt').value.trim();
+  if (!prompt){ toast('Промпт пустой'); return; }
+  const m = modelOf(model);
+  if (!confirm('Перегенерировать «' + s.title + '» моделью ' + m.name + '?' + (m.credits != null ? ' Спишется ≈ ' + fmt(m.credits) + '.' : '') + ' Старые версии сохранятся.')) return;
+  askNotify();
+  try {
+    const r = await fetch(HELPER + '/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: [{ id: s.id, title: s.title, prompt, model, regen: true }] }) });
+    const d = await r.json();
+    toast((d.added || []).length ? 'Новая версия поставлена в очередь' : 'Не удалось поставить в очередь');
+    modelsAt = 0; await poll(); renderCardVers();
+  } catch { toast('Не удалось связаться с помощником'); }
+}
+function closeCard(){ const d = document.getElementById('card'); const v = d.querySelector('video'); if (v) v.pause(); if (d.open) d.close(); cardId = null; cardVer = null; }
 function render(force){
   const items = base.map(view);
   const sig = signature(items);
@@ -283,31 +429,28 @@ function render(force){
   all.checked = sel.length > 0 && sel.every(s => s.checked);
   all.disabled = !sel.length;
   const nSel = queueItems().length, p = price();
-  document.getElementById('count').textContent = 'Выбрано: ' + nSel + ' из ' + items.length
+  document.getElementById('count').textContent = 'Выбрано: ' + nSel + ' из ' + items.filter(s => !s.done).length
     + (nSel && p != null ? ' · ≈ ' + fmt(nSel * p) : '') + (balance != null ? ' · на счёте ' + fmt(balance) : '');
   document.getElementById('gen').disabled = !queueItems().length;
   const ae = document.activeElement; const keep = ae && ae.dataset ? { id: ae.dataset.id, i: ae.dataset.i, k: ae.dataset.k } : null;
 
-  document.getElementById('list').innerHTML = items.length ? items.map(s => {
+  const todo = items.filter(s => !s.done);
+  document.getElementById('list').innerHTML = todo.length ? todo.map(s => {
     const [t, cls] = status(s);
-    const isOpen = open.has(s.id);
-    const vsrc = helperOn && s.done ? `${HELPER}/video/${encodeURIComponent(s.id)}.mp4` : '';
-    const thumb = vsrc ? `<video class="thumb" src="${vsrc}#t=0.1" preload="metadata" muted playsinline></video>` : `<div class="thumb">${s.done ? '🎬' : ''}</div>`;
-    const editable = !s.done;
+    const editable = selectable(s);
     const shots = s.shots.map((x,i) => editable
       ? `<div class="shot"><span class="tm">${i*2}–${i*2+2} с</span><input type="text" value="${esc(x.action)}" aria-label="Действие, кадр ${i+1}" data-id="${s.id}" data-i="${i}" data-k="action"><input class="say" type="text" value="${esc(x.say)}" aria-label="Слово, кадр ${i+1}" data-id="${s.id}" data-i="${i}" data-k="say"></div>`
       : `<div class="shot"><span class="tm">${i*2}–${i*2+2} с</span><span>${esc(x.action)}</span><b>${esc(x.say)}</b></div>`).join('');
-    const player = vsrc ? `<video class="big" src="${vsrc}" controls playsinline preload="metadata"></video>`
-      : `<div class="noVideo">${s.done ? 'Видео готово, но помощник не запущен — запустите его, чтобы посмотреть' : 'Видео появится здесь после генерации'}</div>`;
-    const err = (s.job && s.job.status === 'failed' && !s.done) ? `<div class="err-note">${esc(s.job.error || '')}</div>` : '';
-    const file = s.done ? `<div class="file">${esc((s.job && s.job.file) || s.file || '')}</div>` : '';
-    const more = isOpen ? `<div class="more"><div class="cols"><div style="display:grid;gap:12px;min-width:0"><div class="words" style="white-space:normal">${esc(s.location)}</div><div class="shots">${shots}</div><div class="prompt" data-prompt="${s.id}">${esc(buildPrompt(s))}</div><div><button class="btn small" data-copy="${s.id}">Копировать промпт</button></div>${err}${file}</div><div>${player}</div></div></div>` : '';
+    const err = (s.job && s.job.status === 'failed') ? `<div class="err-note">${esc(s.job.error || '')}</div>` : '';
+    const more = open.has(s.id) ? `<div class="more"><div class="words" style="white-space:normal">${esc(s.location)}</div><div class="shots">${shots}</div><div class="prompt" data-prompt="${s.id}">${esc(buildPrompt(s))}</div><div><button class="btn small" data-copy="${s.id}">Копировать промпт</button></div>${err}</div>` : '';
     return `<div class="row"><div class="line" data-open="${s.id}">
       <input type="checkbox" data-check="${s.id}" ${s.checked ? 'checked' : ''} ${selectable(s) ? '' : 'disabled'} aria-label="Одобрить: ${esc(s.title)}">
       <span class="em">${emojiFor(s)}</span>
       <div style="min-width:0"><div class="tt">${esc(s.title)}</div><div class="words">${esc(s.shots.map(x => x.say).join(' · '))}</div></div>
-      <span class="st"><span class="chip ${cls}">${esc(t)}</span>${rowCost(s) ? `<small class="cost">${esc(rowCost(s))}</small>` : ''}</span>${thumb}</div>${more}</div>`;
-  }).join('') : '<div class="none">Сценариев нет — нажмите «Сгенерировать идеи».</div>';
+      <span class="st"><span class="chip ${cls}">${esc(t)}</span>${rowCost(s) ? `<small class="cost">${esc(rowCost(s))}</small>` : ''}</span></div>${more}</div>`;
+  }).join('') : '<div class="none">Все сценарии сгенерированы — нажмите «Сгенерировать идеи».</div>';
+  renderReady(items);
+  if (cardId) renderCardVers();   // в открытой карточке обновляем только список версий — видео и форма не трогаются
 
   if (keep && keep.id){ const el = document.querySelector(`[data-id="${keep.id}"][data-i="${keep.i}"][data-k="${keep.k}"]`); if (el) el.focus(); }
 }
@@ -318,6 +461,14 @@ document.addEventListener('click', e => {
   if (cb){ e.stopPropagation(); return; }                       // чекбокс обрабатывает change
   const cp = e.target.closest('[data-copy]');
   if (cp){ copy(buildPrompt(view(base.find(b => b.id === cp.dataset.copy))), 'Промпт скопирован'); return; }
+  if (e.target.closest('[data-close]')) return closeCard();
+  if (e.target.id === 'card') return closeCard();                // клик по затемнению вокруг карточки
+  const cd = e.target.closest('[data-card]');
+  if (cd) return openCard(cd.dataset.card);
+  const vb = e.target.closest('[data-ver]');
+  if (vb) return showVersion(vb.dataset.ver);
+  if (e.target.closest('#regenBtn')) return regenerate();
+  if (e.target.closest('[data-copy-text]')) return copy(document.getElementById('regenPrompt').value, 'Промпт скопирован');
   if (e.target.closest('#gen')) return generate();
   if (e.target.closest('#askNew')) return addIdeas();
   if (e.target.closest('input,video,textarea')) return;
@@ -327,6 +478,7 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.id === 'model'){ modelId = t.value; save('lk_model', modelId); render(true); return; }
+  if (t.id === 'regenModel') return regenLabel();
   if (t.dataset && t.dataset.check) setChecked(t.dataset.check, t.checked);
   if (t.id === 'all'){ base.map(view).filter(selectable).forEach(s => { state[s.id] = { ...(state[s.id]||{}), checked: t.checked, status: undefined }; }); save('lk_state', state); render(true); }
 });
@@ -341,6 +493,7 @@ document.addEventListener('input', e => {
   if (p) p.textContent = buildPrompt({ ...s, shots });
 });
 
+document.getElementById('card').addEventListener('close', () => { const v = document.querySelector('#card video'); if (v) v.pause(); cardId = null; cardVer = null; });
 renderModels();
 fetch('scenarios.json?v=' + Date.now()).then(r => r.json()).then(d => {
   fileScenarios = d; base = fileScenarios.concat(custom); render(true); poll(); setInterval(poll, 6000);
