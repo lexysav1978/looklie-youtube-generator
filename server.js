@@ -18,12 +18,13 @@ if (fs.existsSync(envPath)) {
   }
 }
 const KEY = process.env.HF_KEY || env.HF_KEY || '';
-const MODE = process.env.MODE || env.MODE || (KEY ? 'api' : 'cli');   // cli = через Claude CLI и MCP, api = через ключ
+const MODE = process.env.MODE || env.MODE || (KEY ? 'api' : 'hf');   // hf = Higgsfield CLI (hf.exe, уже авторизован), cli = через Claude CLI, api = через ключ
 const CLI_MODEL = process.env.CLI_MODEL || env.CLI_MODEL || 'grok_video_v15_lite';
 const CLAUDE_ARGS = process.env.CLAUDE_ARGS || env.CLAUDE_ARGS || '--dangerously-skip-permissions';
 const MODEL = process.env.HF_MODEL || env.HF_MODEL || 'xai/grok-imagine-video/v1.5/reference-to-video';
 const OUT_DIR = process.env.OUT_DIR || env.OUT_DIR || path.join(os.homedir(), 'Desktop', 'YouTuBe UP!');
 const PORT = +(process.env.PORT || env.PORT || 8787);
+const HF_BIN = process.env.HF_BIN || env.HF_BIN || [path.join(os.homedir(), 'bin', 'hf.exe')].find((p) => fs.existsSync(p)) || 'hf';
 const API = 'https://api.higgsfield.ai';
 const ALLOWED_ORIGINS = ['https://lexysav1978.github.io', 'http://localhost:8765', 'http://127.0.0.1:8765'];
 const POLL_MS = 8000;
@@ -88,7 +89,35 @@ async function runJobCli(job) {
   job.file = file; job.status = 'done';
 }
 
+// ---------- режим hf: Higgsfield CLI (как в проекте «Автоматизация Контента»), вход уже выполнен ----------
+function runHf(args, input) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(HF_BIN, args, { windowsHide: true });
+    let out = '', err = '';
+    const timer = setTimeout(() => { child.kill(); reject(new Error('Превышено время ожидания Higgsfield')); }, TIMEOUT_MS);
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (err += d));
+    child.on('error', (e) => { clearTimeout(timer); reject(e); });
+    child.on('close', (code) => { clearTimeout(timer); code === 0 ? resolve(out) : reject(new Error((err || out || 'hf завершился с кодом ' + code).trim().slice(0, 400))); });
+    child.stdin.end(input);   // промпт идёт через stdin
+  });
+}
+
+async function runJobHf(job) {
+  job.status = 'generating';
+  const out = await runHf(['generate', 'create', CLI_MODEL, '--duration', '10', '--aspect_ratio', '9:16', '--resolution', '720p', '--wait', '--wait-timeout', '20m', '--json'], job.prompt);
+  let r; try { r = JSON.parse(out); } catch { throw new Error('Не удалось разобрать ответ hf: ' + out.slice(-300)); }
+  r = Array.isArray(r) ? r[0] : r;
+  if (!r || r.status !== 'completed' || !r.result_url) throw new Error('Статус: ' + (r && r.status));
+  const file = path.join(OUT_DIR, safeName(job.id) + '.mp4');
+  const dl = await fetch(r.result_url);
+  if (!dl.ok) throw new Error('Не удалось скачать видео: HTTP ' + dl.status);
+  fs.writeFileSync(file, Buffer.from(await dl.arrayBuffer()));
+  job.file = file; job.status = 'done';
+}
+
 async function runJob(job) {
+  if (MODE === 'hf') return runJobHf(job);
   if (MODE === 'cli') return runJobCli(job);
   job.status = 'submitting';
   const sub = await hf(`${API}/${MODEL}`, {
@@ -156,7 +185,7 @@ http.createServer(async (req, res) => {
   if (o && !ALLOWED_ORIGINS.includes(o)) return send(res, 403, { error: 'origin not allowed' });
   const url = req.url.split('?')[0];
   try {
-    if (req.method === 'GET' && url === '/health') return send(res, 200, { ok: true, mode: MODE, model: MODE === 'cli' ? CLI_MODEL : MODEL, outDir: OUT_DIR });
+    if (req.method === 'GET' && url === '/health') return send(res, 200, { ok: true, mode: MODE, model: MODE !== 'api' ? CLI_MODEL : MODEL, outDir: OUT_DIR });
     if (req.method === 'GET' && url === '/jobs') {
       const list = [...jobs.values()];
       for (const f of fs.readdirSync(OUT_DIR)) {
@@ -197,6 +226,6 @@ http.createServer(async (req, res) => {
   } catch (e) { send(res, 400, { error: String(e.message || e) }); }
 }).listen(PORT, '127.0.0.1', () => {
   console.log(`Помощник запущен: http://localhost:${PORT}`);
-  console.log(`Режим: ${MODE}, модель: ${MODE === 'cli' ? CLI_MODEL : MODEL}`);
+  console.log(`Режим: ${MODE}, модель: ${MODE !== 'api' ? CLI_MODEL : MODEL}`);
   console.log(`Видео сохраняются в: ${OUT_DIR}`);
 });
