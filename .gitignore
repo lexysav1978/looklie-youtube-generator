@@ -1,2 +1,4 @@
 output/
 character/variant-*.png
+.env
+jobs.json
